@@ -11,8 +11,9 @@ import MaterialPage from "./material-page";
 import FinancePage from "./finance-page";
 import TimelinePage from "./timeline-page";
 import UsersPage from "./users-page";
+import AnalyticsPage from "./analytics-page";
 
-type Page = "dashboard" | "projects" | "project" | "team" | "billing" | "users" | "material" | "finance" | "timeline";
+type Page = "dashboard" | "projects" | "project" | "team" | "billing" | "users" | "material" | "finance" | "timeline" | "analytics";
 
 function Sidebar({ view, setView, session, onLogout }: { view: { page: Page }; setView: (v: { page: Page }) => void; session: { name: string; short: string }; onLogout: () => void }) {
   const items = [
@@ -24,6 +25,7 @@ function Sidebar({ view, setView, session, onLogout }: { view: { page: Page }; s
     { k: "finance",   n: "06", label: "Keuangan" },
     { k: "timeline",  n: "07", label: "Timeline" },
     { k: "users",     n: "08", label: "Pengguna" },
+    { k: "analytics", n: "09", label: "Analitik" },
   ] as const;
 
   return (
@@ -99,6 +101,7 @@ export default function SuperAdmin({ session, onLogout }: { session: Account | n
         {view.page === "finance"  && <FinancePage />}
         {view.page === "timeline" && <TimelinePage />}
         {view.page === "users" && <UsersPage />}
+        {view.page === "analytics" && <AnalyticsPage />}
       </main>
     </div>
   );

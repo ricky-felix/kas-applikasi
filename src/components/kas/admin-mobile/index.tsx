@@ -3,29 +3,37 @@ import { useState } from "react";
 import { Account } from "@/lib/data";
 import { Toast, MobileTopBar } from "../ui";
 import AMHome from "./home";
-import AMProjects from "./projects";
-import AMAttend from "./attend";
-import AMBilling from "./billing";
+import AMLaporan from "./laporan";
+import AMRequests, { RequestsSubTabs, ReqSubTab } from "./requests";
+import AMFinancial, { FinancialSubTabs, SubTab as FinSubTab } from "./financial";
 import AMMore from "./more/index";
 
-type TabKey = "home" | "projects" | "attend" | "billing" | "more";
+type TabKey = "home" | "laporan" | "requests" | "billing" | "more";
 
 export default function AdminMobile({ session, onLogout }: { session: Account | null; onLogout: () => void }) {
-  const [tab, setTab] = useState<TabKey>("home");
-  const [snack, setSnack] = useState<string | null>(null);
+  const [tab, setTab]       = useState<TabKey>("home");
+  const [finSub, setFinSub] = useState<FinSubTab>("tagihan");
+  const [reqSub, setReqSub] = useState<ReqSubTab>("material");
+  const [snack, setSnack]   = useState<string | null>(null);
   const toast = (m: string) => { setSnack(m); setTimeout(() => setSnack(null), 2400); };
 
   const sess = session || { name: "Bu Sari", short: "SR" };
 
   const TABS = [
-    { k: "home",     n: "01", l: "Beranda", icon: "⌂" },
-    { k: "projects", n: "02", l: "Proyek",  icon: "▭" },
-    { k: "attend",   n: "03", l: "Absensi", icon: "✓" },
-    { k: "billing",  n: "04", l: "Tagihan", icon: "$" },
-    { k: "more",     n: "05", l: "Lainnya", icon: "≡" },
+    { k: "home",     n: "01", l: "Beranda",    icon: "⌂" },
+    { k: "laporan",  n: "02", l: "Laporan",    icon: "▤" },
+    { k: "requests", n: "03", l: "Permintaan", icon: "✦" },
+    { k: "billing",  n: "04", l: "Financial",  icon: "$" },
+    { k: "more",     n: "05", l: "Lainnya",    icon: "≡" },
   ] as const;
 
-  const tabLabels: Record<TabKey, string> = { home: "01 · BERANDA", projects: "02 · PROYEK", attend: "03 · ABSENSI", billing: "04 · TAGIHAN", more: "05 · LAINNYA" };
+  const tabLabels: Record<TabKey, string> = {
+    home:     "01 · BERANDA",
+    laporan:  "02 · LAPORAN",
+    requests: "03 · PERMINTAAN",
+    billing:  "04 · FINANCIAL",
+    more:     "05 · LAINNYA",
+  };
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden" style={{ background: "var(--kas-paper)", color: "var(--kas-ink)", fontFamily: "var(--font-manrope), sans-serif" }}>
@@ -33,11 +41,15 @@ export default function AdminMobile({ session, onLogout }: { session: Account | 
 
       <div className="flex-1 overflow-y-auto">
         {tab === "home"     && <AMHome />}
-        {tab === "projects" && <AMProjects toast={toast} />}
-        {tab === "attend"   && <AMAttend toast={toast} />}
-        {tab === "billing"  && <AMBilling toast={toast} />}
+        {tab === "laporan"  && <AMLaporan />}
+        {tab === "requests" && <AMRequests sub={reqSub} toast={toast} />}
+        {tab === "billing"  && <AMFinancial sub={finSub} toast={toast} />}
         {tab === "more"     && <AMMore session={sess} toast={toast} onLogout={onLogout} />}
       </div>
+
+      {/* Sub-tab bars — sit directly above the main nav */}
+      {tab === "requests" && <RequestsSubTabs active={reqSub} setActive={setReqSub} />}
+      {tab === "billing"  && <FinancialSubTabs active={finSub} setActive={setFinSub} />}
 
       <nav className="grid" style={{ gridTemplateColumns: "repeat(5, 1fr)", borderTop: "1px solid var(--kas-ink)", background: "var(--kas-paper)" }}>
         {TABS.map((t, i) => (

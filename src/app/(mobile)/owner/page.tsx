@@ -7,5 +7,5 @@ export default async function OwnerPage() {
   const session = await getSession();
   if (!session || session.role !== "owner") redirect("/");
 
-  return <OwnerDashboard onLogout={logout} />;
+  return <OwnerDashboard session={session} onLogout={logout} />;
 }

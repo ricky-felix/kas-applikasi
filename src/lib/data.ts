@@ -291,6 +291,41 @@ export function payrollTotal(entry: PayrollEntry): number {
   return entry.projects.reduce((s, p) => s + (p.daysPresent + p.daysHalf * 0.5) * entry.rate, 0);
 }
 
+// ── Website analytics (karyaagungsejati.com) mock data ────────────────────
+
+export type WebsiteMonthStat = {
+  month: string;
+  visitors: number;
+  pageViews: number;
+  inquiries: number;
+  bounceRate: number;
+};
+
+export const WEBSITE_MONTHLY: WebsiteMonthStat[] = [
+  { month: "Jan", visitors: 142, pageViews: 487, inquiries: 3, bounceRate: 62 },
+  { month: "Feb", visitors: 168, pageViews: 531, inquiries: 4, bounceRate: 58 },
+  { month: "Mar", visitors: 201, pageViews: 644, inquiries: 6, bounceRate: 55 },
+  { month: "Apr", visitors: 189, pageViews: 612, inquiries: 5, bounceRate: 57 },
+  { month: "Mei", visitors: 234, pageViews: 751, inquiries: 8, bounceRate: 52 },
+];
+
+export type WebsitePage = { label: string; views: number; avgTime: string };
+
+export const WEBSITE_PAGES: WebsitePage[] = [
+  { label: "Beranda",        views: 234, avgTime: "1:42" },
+  { label: "Portofolio",     views: 188, avgTime: "2:15" },
+  { label: "Kontak",         views: 156, avgTime: "0:58" },
+  { label: "Tentang Kami",   views: 89,  avgTime: "1:24" },
+  { label: "Blog / Artikel", views: 44,  avgTime: "2:48" },
+];
+
+export const WEBSITE_FUNNEL = {
+  visitors:       234,
+  inquiries:      8,
+  waContacts:     5,
+  projectsSigned: 1,
+};
+
 export function fmtPhone(s: string): string {
   const d = (s || "").replace(/\D/g, "");
   if (!d) return "";

@@ -1,12 +1,10 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, WORKERS, MATERIALS, CASHFLOW_MAY, TODAY_SHORT, fmtIDRshort, fmtIDR } from "@/lib/data";
-import { Account } from "@/lib/data";
+import { PROJECTS, WORKERS, MATERIALS, CASHFLOW_MAY, MATERIAL_REQUESTS, CHANGE_ORDERS, Account, TODAY_SHORT, fmtIDRshort, fmtIDR } from "@/lib/data";
 import { Kicker, DisplayHeading, MonoLabel, MobileTopBar } from "../ui";
 import OwnerFinanceSheet from "./finance-sheet";
-import OwnerCreateSheet from "./create-sheet";
 
-type Sheet = "proyek" | "bayar" | "pekerja" | "material" | "finance" | "create" | null;
+type Sheet = "proyek" | "bayar" | "pekerja" | "material" | "finance" | "permintaan" | null;
 
 function WhatsAppIcon() {
   return (
@@ -16,26 +14,30 @@ function WhatsAppIcon() {
   );
 }
 
-export default function OwnerDashboard({ onLogout }: { onLogout: () => void }) {
+export default function OwnerDashboard({ session, onLogout }: { session: Account | null; onLogout: () => void }) {
   const [sheet, setSheet] = useState<Sheet>(null);
 
   const activeProjects = PROJECTS.filter((p) => p.status === "Active");
   const outstandingTotal = PROJECTS.reduce((s, p) => s + (p.contractValue - p.paid), 0);
   const workersToday = WORKERS.filter((w) => activeProjects.some((p) => p.assigned.includes(w.id)));
 
-  const lowStockCount = MATERIALS.filter((m) => m.stock <= m.minStock).length;
+  const lowStockCount   = MATERIALS.filter((m) => m.stock <= m.minStock).length;
+  const pendingMR       = MATERIAL_REQUESTS.filter((r) => r.status === "Pending").length;
+  const pendingCO       = CHANGE_ORDERS.filter((c) => c.status === "Menunggu").length;
+  const totalPending    = pendingMR + pendingCO;
 
   const cards = [
-    { key: "proyek",   no: "01", label: "Proyek aktif hari ini", value: String(activeProjects.length).padStart(2, "0"), sub: `dari ${PROJECTS.length} total`,    accent: false },
-    { key: "bayar",    no: "02", label: "Belum dibayar",          value: fmtIDRshort(outstandingTotal),                 sub: "2 termin pending",                  accent: true  },
-    { key: "pekerja",  no: "03", label: "Pekerja hadir",          value: String(workersToday.length).padStart(2, "0"),  sub: `dari ${WORKERS.length} pekerja`,    accent: false },
-    { key: "material", no: "04", label: "Material gudang",        value: String(MATERIALS.length).padStart(2, "0"),     sub: lowStockCount > 0 ? `${lowStockCount} stok tipis` : "semua aman", accent: lowStockCount > 0 },
-    { key: "finance",  no: "05", label: "Arus kas bulan ini",     value: fmtIDRshort(CASHFLOW_MAY.filter((e) => e.type === "in").reduce((s, e) => s + e.amount, 0)), sub: `${CASHFLOW_MAY.filter((e) => e.type === "out").length} pengeluaran tercatat`, accent: false },
+    { key: "proyek",     no: "01", label: "Proyek aktif hari ini", value: String(activeProjects.length).padStart(2, "0"), sub: `dari ${PROJECTS.length} total`,                                  accent: false                  },
+    { key: "bayar",      no: "02", label: "Belum dibayar",          value: fmtIDRshort(outstandingTotal),                 sub: "2 termin pending",                                               accent: true                   },
+    { key: "pekerja",    no: "03", label: "Pekerja hadir",          value: String(workersToday.length).padStart(2, "0"),  sub: `dari ${WORKERS.length} pekerja`,                                 accent: false                  },
+    { key: "material",   no: "04", label: "Material gudang",        value: String(MATERIALS.length).padStart(2, "0"),     sub: lowStockCount > 0 ? `${lowStockCount} stok tipis` : "semua aman", accent: lowStockCount > 0      },
+    { key: "finance",    no: "05", label: "Arus kas bulan ini",     value: fmtIDRshort(CASHFLOW_MAY.filter((e) => e.type === "in").reduce((s, e) => s + e.amount, 0)), sub: `${CASHFLOW_MAY.filter((e) => e.type === "out").length} pengeluaran tercatat`, accent: false },
+    { key: "permintaan", no: "06", label: "Permintaan pending",     value: String(totalPending).padStart(2, "0"),         sub: `${pendingMR} material · ${pendingCO} change order`,              accent: totalPending > 0       },
   ] as const;
 
   return (
     <div className="h-full flex flex-col relative overflow-hidden" style={{ background: "var(--kas-paper)", color: "var(--kas-ink)" }}>
-      <MobileTopBar tabLabel="BAPAK · OWNER">
+      <MobileTopBar tabLabel={`${session?.name ?? "Owner"} · OWNER`}>
         <button
           onClick={onLogout}
           style={{ border: "1px solid var(--kas-line)", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 8px" }}
@@ -77,18 +79,7 @@ export default function OwnerDashboard({ onLogout }: { onLogout: () => void }) {
         ))}
       </div>
 
-      <div className="flex-1 flex flex-col justify-end px-5 pb-4 gap-3">
-        <button
-          onClick={() => setSheet("create")}
-          className="w-full flex items-center justify-between px-3.5 py-3.5"
-          style={{ border: "1px dashed var(--kas-ink)", background: "var(--kas-paper)", cursor: "pointer" }}
-        >
-          <div className="flex items-center gap-2.5">
-            <span style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 0.5 }}>+</span>
-            <span style={{ fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600 }}>Buat akun baru</span>
-          </div>
-          <MonoLabel size={9}>Administrasi / Pekerja</MonoLabel>
-        </button>
+      <div className="flex-1 flex flex-col justify-end px-5 pb-4">
         <div className="text-center" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", color: "var(--kas-ink-3)", textTransform: "uppercase" }}>
           Tap angka untuk lihat detail.
         </div>
@@ -103,18 +94,18 @@ export default function OwnerDashboard({ onLogout }: { onLogout: () => void }) {
           >
             <div className="flex justify-between items-center px-5 py-3.5" style={{ borderBottom: "1px solid var(--kas-line)" }}>
               <MonoLabel size={10}>
-                {sheet === "create" ? "— · PENDAFTARAN" : `${cards.find((c) => c.key === sheet)?.no} · ${sheet === "material" ? "MATERIAL" : "DETAIL"}`}
+                {sheet === "create" ? "— · PENDAFTARAN" : `${cards.find((c) => c.key === sheet)?.no} · ${sheet.toUpperCase()}`}
               </MonoLabel>
               <button onClick={() => setSheet(null)} style={{ border: "none", background: "transparent", fontFamily: "var(--font-newsreader), serif", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
             <div className="px-5 py-4 overflow-y-auto">
               <DisplayHeading size={26}>
-                {sheet === "proyek"   && <>Proyek aktif,<br /><em>hari ini.</em></>}
-                {sheet === "bayar"    && <>Tagihan,<br /><em>belum lunas.</em></>}
-                {sheet === "pekerja"  && <>Pekerja,<br /><em>di lapangan.</em></>}
-                {sheet === "material" && <>Material,<br /><em>stok gudang.</em></>}
-                {sheet === "finance"  && <>Arus kas,<br /><em>bulan ini.</em></>}
-                {sheet === "create"   && <>Buat akun,<br /><em>baru.</em></>}
+                {sheet === "proyek"     && <>Proyek aktif,<br /><em>hari ini.</em></>}
+                {sheet === "bayar"      && <>Tagihan,<br /><em>belum lunas.</em></>}
+                {sheet === "pekerja"    && <>Pekerja,<br /><em>di lapangan.</em></>}
+                {sheet === "material"   && <>Material,<br /><em>stok gudang.</em></>}
+                {sheet === "finance"    && <>Arus kas,<br /><em>bulan ini.</em></>}
+                {sheet === "permintaan" && <>Permintaan,<br /><em>menunggu.</em></>}
               </DisplayHeading>
 
               {sheet === "proyek" && (
@@ -214,8 +205,55 @@ export default function OwnerDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
               )}
 
+              {sheet === "permintaan" && (
+                <div className="mt-4">
+                  {/* Material requests */}
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 8 }}>
+                    Material · {pendingMR} pending
+                  </div>
+                  <div style={{ borderTop: "1px solid var(--kas-line-2)" }}>
+                    {MATERIAL_REQUESTS.filter((r) => r.status === "Pending").length === 0 ? (
+                      <div className="py-3" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-4)" }}>Tidak ada.</div>
+                    ) : (
+                      MATERIAL_REQUESTS.filter((r) => r.status === "Pending").map((req) => (
+                        <div key={req.id} className="flex justify-between items-start py-3" style={{ borderBottom: "1px solid var(--kas-line-2)" }}>
+                          <div>
+                            <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 15 }}>{req.materialName}</div>
+                            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", marginTop: 2, letterSpacing: "0.08em" }}>
+                              {req.workerName} · {PROJECTS.find((p) => p.id === req.projectId)?.code} · {req.date}
+                            </div>
+                            {req.note && <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 13, color: "var(--kas-ink-2)", fontStyle: "italic", marginTop: 2 }}>{req.note}</div>}
+                          </div>
+                          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, fontWeight: 600, flexShrink: 0, marginLeft: 12 }}>{req.qty} {req.unit}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Change orders */}
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginTop: 20, marginBottom: 8 }}>
+                    Change Order · {pendingCO} pending
+                  </div>
+                  <div style={{ borderTop: "1px solid var(--kas-line-2)" }}>
+                    {CHANGE_ORDERS.filter((c) => c.status === "Menunggu").length === 0 ? (
+                      <div className="py-3" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-4)" }}>Tidak ada.</div>
+                    ) : (
+                      CHANGE_ORDERS.filter((c) => c.status === "Menunggu").map((co) => (
+                        <div key={co.id} className="py-3" style={{ borderBottom: "1px solid var(--kas-line-2)" }}>
+                          <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 15, lineHeight: 1.3 }}>{co.description}</div>
+                          <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", marginTop: 3, letterSpacing: "0.08em" }}>
+                            {PROJECTS.find((p) => p.id === co.projectId)?.code} · {co.date} · oleh {co.requestedBy}
+                          </div>
+                          <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, fontWeight: 700, color: "var(--kas-rust)", marginTop: 4 }}>
+                            +Rp {co.costImpact.toLocaleString("id-ID")}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
               {sheet === "finance" && <OwnerFinanceSheet />}
-              {sheet === "create" && <OwnerCreateSheet onDone={() => setSheet(null)} />}
             </div>
           </div>
         </>
