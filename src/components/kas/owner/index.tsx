@@ -46,41 +46,41 @@ export default function OwnerDashboard({ session, onLogout }: { session: Account
         </button>
       </MobileTopBar>
 
-      <div className="px-5 pt-5 pb-1">
-        <Kicker no="00" label={TODAY_SHORT} />
-        <DisplayHeading size={30}>
-          Tiga angka,<br /><em>satu pagi.</em>
-        </DisplayHeading>
-      </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-5 pt-5 pb-1">
+          <Kicker no="00" label={TODAY_SHORT} />
+          <DisplayHeading size={30}>
+            Tiga angka,<br /><em>satu pagi.</em>
+          </DisplayHeading>
+        </div>
 
-      <div className="px-5 pt-4 pb-2 flex flex-col">
-        {cards.map((c, i) => (
-          <button
-            key={c.key}
-            onClick={() => setSheet(c.key)}
-            className="grid items-center gap-3.5 text-left cursor-pointer"
-            style={{
-              gridTemplateColumns: "auto 1fr auto",
-              border: "none",
-              background: "transparent",
-              borderTop: i === 0 ? "1px solid var(--kas-ink)" : "1px solid var(--kas-line)",
-              borderBottom: i === cards.length - 1 ? "1px solid var(--kas-ink)" : "none",
-              padding: "18px 0",
-            }}
-          >
-            <MonoLabel size={11}>{c.no}</MonoLabel>
-            <div>
-              <div style={{ fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, color: "var(--kas-ink-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{c.label}</div>
-              <div style={{ fontFamily: "var(--font-newsreader), serif", fontWeight: 500, fontSize: 42, lineHeight: 1.0, letterSpacing: "-0.02em", marginTop: 4, color: c.accent ? "var(--kas-rust)" : "var(--kas-ink)" }}>{c.value}</div>
-              <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", marginTop: 6, letterSpacing: "0.08em" }}>{c.sub}</div>
-            </div>
-            <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 28, color: "var(--kas-ink)", lineHeight: 1 }}>→</div>
-          </button>
-        ))}
-      </div>
+        <div className="px-5 pt-4 pb-2 flex flex-col">
+          {cards.map((c, i) => (
+            <button
+              key={c.key}
+              onClick={() => setSheet(c.key)}
+              className="grid items-center gap-3.5 text-left cursor-pointer"
+              style={{
+                gridTemplateColumns: "auto 1fr auto",
+                border: "none",
+                background: "transparent",
+                borderTop: i === 0 ? "1px solid var(--kas-ink)" : "1px solid var(--kas-line)",
+                borderBottom: i === cards.length - 1 ? "1px solid var(--kas-ink)" : "none",
+                padding: "18px 0",
+              }}
+            >
+              <MonoLabel size={11}>{c.no}</MonoLabel>
+              <div>
+                <div style={{ fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, color: "var(--kas-ink-3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{c.label}</div>
+                <div style={{ fontFamily: "var(--font-newsreader), serif", fontWeight: 500, fontSize: 42, lineHeight: 1.0, letterSpacing: "-0.02em", marginTop: 4, color: c.accent ? "var(--kas-rust)" : "var(--kas-ink)" }}>{c.value}</div>
+                <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", marginTop: 6, letterSpacing: "0.08em" }}>{c.sub}</div>
+              </div>
+              <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 28, color: "var(--kas-ink)", lineHeight: 1 }}>→</div>
+            </button>
+          ))}
+        </div>
 
-      <div className="flex-1 flex flex-col justify-end px-5 pb-4">
-        <div className="text-center" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", color: "var(--kas-ink-3)", textTransform: "uppercase" }}>
+        <div className="px-5 py-5 text-center" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", color: "var(--kas-ink-3)", textTransform: "uppercase" }}>
           Tap angka untuk lihat detail.
         </div>
       </div>
