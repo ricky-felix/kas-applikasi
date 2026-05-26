@@ -94,7 +94,7 @@ export default function OwnerDashboard({ session, onLogout }: { session: Account
           >
             <div className="flex justify-between items-center px-5 py-3.5" style={{ borderBottom: "1px solid var(--kas-line)" }}>
               <MonoLabel size={10}>
-                {sheet === "create" ? "— · PENDAFTARAN" : `${cards.find((c) => c.key === sheet)?.no} · ${sheet.toUpperCase()}`}
+                {`${cards.find((c) => c.key === sheet)?.no} · ${sheet!.toUpperCase()}`}
               </MonoLabel>
               <button onClick={() => setSheet(null)} style={{ border: "none", background: "transparent", fontFamily: "var(--font-newsreader), serif", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
