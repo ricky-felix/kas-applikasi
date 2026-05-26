@@ -11,10 +11,9 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
       */}
       <div
         className={[
-          "relative w-full min-h-screen overflow-y-auto",
-          "sm:min-h-0 sm:w-[480px] sm:max-h-[calc(100vh-4rem)]",
-          "sm:overflow-hidden sm:rounded-none",
-          "sm:shadow-[0_0_0_1px_var(--kas-ink),0_24px_64px_rgba(14,12,9,0.22)]",
+          "relative w-full h-[100dvh] overflow-hidden",
+          "sm:h-[calc(100vh-4rem)] sm:w-[480px]",
+          "sm:shadow-[0_0_0_1px_var(--kas-ink),0_24px_64px_rgba(22,28,44,0.22)]",
         ].join(" ")}
         style={{ background: "var(--kas-paper)" }}
       >

@@ -1,49 +1,40 @@
 "use client";
 import { ReactNode } from "react";
 
-export function KasBrandMark({ size = 24 }: { size?: number }) {
+export function KasBrandMark({ size = 36 }: { size?: number }) {
   return (
-    <div
-      className="relative grid place-items-center"
-      style={{
-        width: size,
-        height: size,
-        background: "var(--kas-ink)",
-        color: "var(--kas-paper)",
-        fontFamily: "var(--font-newsreader), serif",
-        fontWeight: 600,
-        fontSize: size * 0.5,
-      }}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ flexShrink: 0 }}
     >
-      K
-      <span
-        className="absolute"
-        style={{
-          right: -2,
-          bottom: -2,
-          width: size * 0.21,
-          height: size * 0.21,
-          background: "var(--kas-orange)",
-        }}
-      />
-    </div>
+      <rect x="1" y="1" width="30" height="30" stroke="var(--kas-cobalt)" strokeWidth="2" />
+      <rect x="5" y="5" width="22" height="22" rx="4" stroke="var(--kas-rust)" strokeWidth="2" />
+      <circle cx="16" cy="16" r="4" fill="var(--kas-ink)" />
+    </svg>
   );
 }
 
-export function KasLogo({ size = 24 }: { size?: number }) {
+export function KasLogo({ size = 36 }: { size?: number }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-3">
       <KasBrandMark size={size} />
-      <div
-        style={{
-          fontFamily: "var(--font-newsreader), serif",
-          fontWeight: 500,
-          fontSize: size * 0.75,
-          letterSpacing: "-0.01em",
-          color: "var(--kas-ink)",
-        }}
-      >
-        Tauke
+      <div className="flex flex-col leading-none">
+        <span
+          className="font-display tracking-tight"
+          style={{ fontSize: size * 0.56 }}
+        >
+          KAS<span className="text-cobalt">.</span>
+        </span>
+        <span
+          className="font-mono-kas text-muted-foreground uppercase"
+          style={{ fontSize: 9, letterSpacing: "0.18em", marginTop: 2 }}
+        >
+          Tauke
+        </span>
       </div>
     </div>
   );
@@ -126,10 +117,10 @@ export function MonoLabel({
 
 export function StatusPill({ status }: { status: string }) {
   const map: Record<string, { bg: string; color: string; dot: string }> = {
-    Active:    { bg: "var(--kas-paper-2)", color: "var(--kas-ink)",   dot: "var(--kas-orange)" },
-    "On Hold": { bg: "var(--kas-amber-soft)", color: "var(--kas-amber)", dot: "var(--kas-amber)" },
-    Completed: { bg: "var(--kas-green-soft)", color: "var(--kas-green)", dot: "var(--kas-green)" },
-    Draft:     { bg: "var(--kas-paper-2)", color: "var(--kas-ink-3)", dot: "var(--kas-ink-3)" },
+    Active:    { bg: "var(--kas-cobalt-soft)",  color: "var(--kas-cobalt-ink)",  dot: "var(--kas-cobalt)" },
+    "On Hold": { bg: "var(--kas-ochre-soft)",   color: "var(--kas-ochre-ink)",   dot: "var(--kas-ochre)" },
+    Completed: { bg: "var(--kas-moss-soft)",    color: "var(--kas-moss-ink)",    dot: "var(--kas-moss)" },
+    Draft:     { bg: "var(--kas-paper-2)",      color: "var(--kas-ink-3)",       dot: "var(--kas-ink-3)" },
   };
   const c = map[status] || map.Draft;
   return (
@@ -182,7 +173,7 @@ export function Toast({ message }: { message: string }) {
     >
       <span
         className="inline-block shrink-0"
-        style={{ width: 8, height: 8, background: "var(--kas-orange)" }}
+        style={{ width: 8, height: 8, background: "var(--kas-cobalt)" }}
       />
       {message}
     </div>

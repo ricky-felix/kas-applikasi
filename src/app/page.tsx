@@ -12,7 +12,7 @@ export default async function LoginPage() {
       style={{ background: "var(--kas-bg)" }}
     >
       <div
-        className="w-full h-full sm:w-[390px] sm:h-[844px] sm:shadow-[0_0_0_1px_var(--kas-ink),0_32px_80px_rgba(14,12,9,0.25)] overflow-hidden"
+        className="w-full h-full sm:w-[390px] sm:h-[844px] sm:shadow-[0_0_0_1px_var(--kas-ink),0_32px_80px_rgba(22,28,44,0.25)] overflow-hidden"
         style={{ background: "var(--kas-paper)" }}
       >
         <LoginScreen />

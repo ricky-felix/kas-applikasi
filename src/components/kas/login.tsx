@@ -156,7 +156,7 @@ export default function LoginScreen() {
                   className="grid place-items-center cursor-text"
                   style={{
                     height: 52,
-                    border: `1px solid ${i === pin.length ? "var(--kas-orange)" : "var(--kas-ink)"}`,
+                    border: `1px solid ${i === pin.length ? "var(--kas-cobalt)" : "var(--kas-ink)"}`,
                     background: pin.length > i ? "var(--kas-ink)" : "var(--kas-paper-2)",
                     color: "var(--kas-paper)",
                     fontFamily: "var(--font-jetbrains), monospace",
@@ -256,7 +256,7 @@ export default function LoginScreen() {
             </div>
           </>
         ) : (
-          <div className="text-center" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: isPending ? "var(--kas-orange)" : "var(--kas-ink-3)" }}>
+          <div className="text-center" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: isPending ? "var(--kas-cobalt)" : "var(--kas-ink-3)" }}>
             {isPending ? "Masuk…" : "Ketik kode akses 6 karakter — otomatis masuk"}
           </div>
         )}
