@@ -22,7 +22,7 @@ export function InvoiceSidebar({ project, totalPaid, outstanding }: { project: P
   const waUrl = buildWaUrl(project, outstanding);
 
   return (
-    <div className="lg:sticky lg:top-8 lg:self-start border-t lg:border-t-0" style={{ background: "var(--kas-paper-2)", borderColor: "var(--kas-line)" }}>
+    <div className="sticky top-0 self-start h-screen overflow-y-auto border-l flex flex-col" style={{ background: "var(--kas-paper-2)", borderColor: "var(--kas-line)" }}>
       {/* Totals */}
       <div style={{ padding: "24px 28px", borderBottom: "1px solid var(--kas-line)" }}>
         <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 16 }}>

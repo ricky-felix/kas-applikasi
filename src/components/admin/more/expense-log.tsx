@@ -3,7 +3,7 @@ import { useState } from "react";
 import { EXPENSES, fmtIDR } from "@/lib/data";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
-export default function AMExpenseLog({ onBack, toast }: { onBack: () => void; toast: (m: string) => void }) {
+export default function AMExpenseLog({ onBack, toast }: { onBack?: () => void; toast: (m: string) => void }) {
   const [showForm, setShowForm] = useState(false);
   const total = EXPENSES.reduce((s, e) => s + e.amount, 0);
   const catColor: Record<string, string> = { Material: "var(--kas-cobalt-soft)", Transport: "var(--kas-ochre-soft)", Upah: "var(--kas-moss-soft)", "Lain-lain": "var(--kas-paper-2)" };
@@ -11,7 +11,7 @@ export default function AMExpenseLog({ onBack, toast }: { onBack: () => void; to
 
   return (
     <div className="px-5 pt-4 pb-6">
-      <button onClick={onBack} style={{ border: "none", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", padding: "0 0 10px" }}>← Kembali</button>
+      {onBack && <button onClick={onBack} style={{ border: "none", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", padding: "0 0 10px" }}>← Kembali</button>}
       <Kicker no="08" label={`${EXPENSES.length} ENTRI`} />
       <div className="flex justify-between items-end mb-4">
         <DisplayHeading size={26}>Pengeluaran,<br /><em>bulan ini.</em></DisplayHeading>

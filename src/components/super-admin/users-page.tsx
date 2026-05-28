@@ -8,14 +8,22 @@ export default function UsersPage() {
   const [createRole, setCreateRole] = useState<string | null>(null);
   const [resetInfo, setResetInfo] = useState<{ idx: number; code: string } | null>(null);
   const [editingUser, setEditingUser] = useState<{ name: string; phone: string; role: string; short: string; since: string } | null>(null);
+  const [fireConfirm, setFireConfirm] = useState<{ idx: number; name: string; role: string } | null>(null);
+  const [firedIdxs, setFiredIdxs] = useState<Set<number>>(new Set());
 
-  const users = [
+  const allUsers = [
     { name: "Ricky", phone: "0811 6000 0001", role: "super_admin", short: "RC", since: "Jan 2024" },
     { name: "Pak Hartono", phone: "0812 6011 8821", role: "owner", short: "PH", since: "Jan 2024" },
     { name: "Bu Sari", phone: "0813 6001 0055", role: "admin", short: "SR", since: "Feb 2024" },
     ...WORKERS.map((w) => ({ name: w.name, phone: w.phone.replace("+62 ", "0"), role: "worker", short: w.short, since: "Mar 2024" })),
   ];
-  const counts = { super_admin: 1, owner: 1, admin: 1, worker: WORKERS.length };
+  const users = allUsers.filter((_, i) => !firedIdxs.has(i));
+  const counts = {
+    super_admin: users.filter((u) => u.role === "super_admin").length,
+    owner:       users.filter((u) => u.role === "owner").length,
+    admin:       users.filter((u) => u.role === "admin").length,
+    worker:      users.filter((u) => u.role === "worker").length,
+  };
 
   const handleResetCode = (i: number) => {
     const code = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -81,8 +89,18 @@ export default function UsersPage() {
               </td>
               <td style={{ padding: "16px 14px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--kas-ink-3)" }}>{u.since}</td>
               <td style={{ padding: "16px 14px", textAlign: "right" }}>
-                <button onClick={() => handleResetCode(i)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "5px 10px", marginRight: 6, fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>Reset Kode</button>
-                <button onClick={() => setEditingUser(u)} style={{ background: "transparent", border: "1px solid var(--kas-line)", padding: "5px 10px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", color: "var(--kas-ink-3)" }}>Edit</button>
+                <div className="flex items-center justify-end gap-2">
+                  <button onClick={() => handleResetCode(i)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "5px 10px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>Reset Kode</button>
+                  <button onClick={() => setEditingUser(u)} style={{ background: "transparent", border: "1px solid var(--kas-line)", padding: "5px 10px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", color: "var(--kas-ink-3)" }}>Edit</button>
+                  {u.role !== "super_admin" && (
+                    <button
+                      onClick={() => setFireConfirm({ idx: allUsers.findIndex((x) => x.name === u.name), name: u.name, role: u.role })}
+                      style={{ background: "var(--kas-rust)", color: "var(--kas-paper)", border: "none", padding: "5px 10px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}
+                    >
+                      Pecat
+                    </button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
@@ -175,6 +193,41 @@ export default function UsersPage() {
             <div className="flex gap-2.5 justify-end mt-5">
               <button onClick={() => setEditingUser(null)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
               <button onClick={() => setEditingUser(null)} style={{ background: "var(--kas-ink)", color: "var(--kas-paper)", border: "none", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Simpan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fire Confirmation Modal */}
+      {fireConfirm && (
+        <div className="fixed inset-0 grid place-items-center" style={{ background: "rgba(22,28,44,0.6)", zIndex: 50 }} onClick={() => setFireConfirm(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 440, background: "var(--kas-paper)", border: "2px solid var(--kas-rust)", padding: "28px 32px" }}>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="inline-block" style={{ width: 10, height: 10, background: "var(--kas-rust)" }} />
+              <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--kas-rust)" }}>TINDAKAN TIDAK DAPAT DIBATALKAN</span>
+            </div>
+            <h2 style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 28, fontWeight: 400, letterSpacing: "-0.01em", margin: "0 0 8px" }}>
+              Pecat <em>{fireConfirm.name.split(" ")[0]}?</em>
+            </h2>
+            <p style={{ fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, color: "var(--kas-ink-3)", lineHeight: 1.6, margin: "0 0 24px" }}>
+              Akun <strong>{fireConfirm.name}</strong> akan dinonaktifkan dan tidak bisa lagi masuk ke sistem. Data riwayat tetap tersimpan.
+            </p>
+            <div className="flex gap-2.5 justify-end">
+              <button
+                onClick={() => setFireConfirm(null)}
+                style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => {
+                  setFiredIdxs((prev) => new Set([...prev, fireConfirm.idx]));
+                  setFireConfirm(null);
+                }}
+                style={{ background: "var(--kas-rust)", color: "var(--kas-paper)", border: "none", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}
+              >
+                Ya, Pecat
+              </button>
             </div>
           </div>
         </div>

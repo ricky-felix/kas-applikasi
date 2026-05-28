@@ -1,5 +1,23 @@
-export const TODAY = "Senin, 24 Mei 2026";
-export const TODAY_SHORT = "24 MEI 2026";
+const _DAYS_ID   = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+const _MONTHS_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+// daysAgo > 0 = past, daysAgo < 0 = future
+function _rd(daysAgo: number, full = false): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  const s = `${d.getDate()} ${_MONTHS_ID[d.getMonth()]}`;
+  return full ? `${s} ${d.getFullYear()}` : s;
+}
+
+export const TODAY = (() => {
+  const d = new Date();
+  return `${_DAYS_ID[d.getDay()]}, ${d.getDate()} ${_MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
+})();
+
+export const TODAY_SHORT = (() => {
+  const d = new Date();
+  return `${d.getDate()} ${_MONTHS_ID[d.getMonth()].toUpperCase()} ${d.getFullYear()}`;
+})();
 
 export type Worker = {
   id: string;
@@ -8,6 +26,7 @@ export type Worker = {
   role: string;
   phone: string;
   rate: number;
+  isKepalaProyek?: boolean;
 };
 
 export type Project = {
@@ -49,7 +68,7 @@ export const ACCOUNTS: Account[] = [
   { phone: "081260118821", pin: "BAPAK1", role: "owner", name: "Pak Hartono", short: "PH" },
   { phone: "081360010055", pin: "ADM088", role: "admin", name: "Bu Sari", short: "SR" },
   { phone: "081361220901", pin: "SUPAR9", role: "worker", workerId: "w1", name: "Pak Suparman", short: "SP" },
-  { phone: "081361221502", pin: "BUDI22", role: "worker", workerId: "w2", name: "Budi Hartono", short: "BH" },
+  { phone: "081361223301", pin: "KEPLA1", role: "worker", workerId: "w7", name: "Pak Anto", short: "AN" },
 ];
 
 export const WORKERS: Worker[] = [
@@ -59,6 +78,7 @@ export const WORKERS: Worker[] = [
   { id: "w4", name: "Dedi Saragih",  short: "DS", role: "Tukang Madya",   phone: "+62 813 6122 4470", rate: 220000 },
   { id: "w5", name: "Joko Sianturi", short: "JS", role: "Tukang",         phone: "+62 813 6122 7733", rate: 200000 },
   { id: "w6", name: "Rahmat Sinaga", short: "RS", role: "Helper",         phone: "+62 813 6122 8810", rate: 150000 },
+  { id: "w7", name: "Pak Anto",     short: "AN", role: "Tukang Senior",  phone: "+62 813 6122 3301", rate: 400000, isKepalaProyek: true },
 ];
 
 export const PROJECTS: Project[] = [
@@ -71,12 +91,12 @@ export const PROJECTS: Project[] = [
     address: "Cemara Asri Blok C5",
     category: "Waterproofing Atap",
     status: "Active",
-    start: "12 Mei 2026",
-    endEst: "30 Mei 2026",
+    start:  _rd(12, true),
+    endEst: _rd(-6, true),
     progress: 68,
     contractValue: 18500000,
     paid: 11100000,
-    assigned: ["w1", "w2", "w3"],
+    assigned: ["w1", "w2", "w3", "w7"],
     activity: [
       { t: "08:15", who: "Pak Suparman", action: "Check-in Hadir" },
       { t: "08:14", who: "Budi Hartono", action: "Check-in Hadir" },
@@ -93,14 +113,14 @@ export const PROJECTS: Project[] = [
     address: "Jl. S. Parman",
     category: "Waterproofing Basement",
     status: "Active",
-    start: "02 Mei 2026",
-    endEst: "10 Jun 2026",
+    start:  _rd(22, true),
+    endEst: _rd(-17, true),
     progress: 42,
     contractValue: 87000000,
     paid: 43500000,
-    assigned: ["w1", "w4", "w5", "w6"],
+    assigned: ["w1", "w4", "w5", "w6", "w7"],
     activity: [
-      { t: "08:20", who: "Dedi Saragih", action: "Check-in Hadir" },
+      { t: "08:20", who: "Dedi Saragih",  action: "Check-in Hadir" },
       { t: "08:18", who: "Joko Sianturi", action: "Check-in Hadir" },
     ],
   },
@@ -113,12 +133,46 @@ export const PROJECTS: Project[] = [
     address: "Setiabudi Indah",
     category: "Waterproofing Kolam",
     status: "On Hold",
-    start: "20 Apr 2026",
-    endEst: "28 Mei 2026",
+    start:  _rd(34, true),
+    endEst: _rd(-4, true),
     progress: 80,
     contractValue: 32500000,
     paid: 22750000,
     assigned: [],
+    activity: [],
+  },
+  {
+    id: "p5",
+    code: "KAS-2026-010",
+    slug: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    name: "Waterproofing Gudang Logistik Mabar",
+    client: { name: "CV. Maju Bersama", phone: "+62 811 6044 5566", address: "Jl. Mabar Hilir No. 45, Medan" },
+    address: "Jl. Mabar Hilir",
+    category: "Waterproofing Lantai",
+    status: "Draft",
+    start:  _rd(-17, true),
+    endEst: _rd(-67, true),
+    progress: 0,
+    contractValue: 55000000,
+    paid: 0,
+    assigned: [],
+    activity: [],
+  },
+  {
+    id: "p6",
+    code: "KAS-2026-009",
+    slug: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    name: "Dak Beton Perumahan Griya Makmur",
+    client: { name: "Bpk. Situmorang", phone: "+62 812 6055 7788", address: "Perumahan Griya Makmur Blok B No. 7" },
+    address: "Griya Makmur Blok B",
+    category: "Waterproofing Atap",
+    status: "Active",
+    start:  _rd(53, true),
+    endEst: _rd(14, true),
+    progress: 75,
+    contractValue: 28000000,
+    paid: 14000000,
+    assigned: ["w3", "w6"],
     activity: [],
   },
   {
@@ -130,8 +184,8 @@ export const PROJECTS: Project[] = [
     address: "Jl. Putri Hijau",
     category: "Waterproofing Fasad",
     status: "Completed",
-    start: "10 Mar 2026",
-    endEst: "28 Apr 2026",
+    start:  _rd(75, true),
+    endEst: _rd(26, true),
     progress: 100,
     contractValue: 145000000,
     paid: 145000000,
@@ -141,8 +195,8 @@ export const PROJECTS: Project[] = [
 ];
 
 export const BILLING: BillingStage[] = [
-  { stage: "DP (30%)",        amount: 5550000,  status: "Paid",    date: "12 Mei 2026" },
-  { stage: "Termin 1 (30%)", amount: 5550000,  status: "Paid",    date: "20 Mei 2026" },
+  { stage: "DP (30%)",        amount: 5550000,  status: "Paid",    date: _rd(12, true) },
+  { stage: "Termin 1 (30%)", amount: 5550000,  status: "Paid",    date: _rd(4, true)  },
   { stage: "Termin 2 (20%)", amount: 3700000,  status: "Pending", date: null },
   { stage: "Pelunasan (20%)",amount: 3700000,  status: "Pending", date: null },
 ];
@@ -218,38 +272,38 @@ export type CashFlowEntry = {
 };
 
 export const EXPENSES: Expense[] = [
-  { id: "e1",  projectId: "p1", date: "12 Mei", category: "Material",    description: "Sika Top Seal-107 40 kg",          amount: 1800000, by: "Bu Sari" },
-  { id: "e2",  projectId: "p1", date: "12 Mei", category: "Transport",   description: "Ongkos mobilisasi alat",            amount: 350000,  by: "Pak Suparman" },
-  { id: "e3",  projectId: "p1", date: "14 Mei", category: "Material",    description: "Aquaproof Original 20 kg",          amount: 760000,  by: "Bu Sari" },
-  { id: "e4",  projectId: "p1", date: "18 Mei", category: "Lain-lain",   description: "Konsumsi lapangan",                 amount: 120000,  by: "Pak Suparman" },
-  { id: "e5",  projectId: "p1", date: "20 Mei", category: "Material",    description: "Net Fiber Glass 50 m²",             amount: 900000,  by: "Bu Sari" },
-  { id: "e6",  projectId: "p2", date: "02 Mei", category: "Material",    description: "Primer Coat 10 ltr",                amount: 650000,  by: "Bu Sari" },
-  { id: "e7",  projectId: "p2", date: "05 Mei", category: "Transport",   description: "Mobilisasi alat berat",             amount: 750000,  by: "Dedi Saragih" },
-  { id: "e8",  projectId: "p2", date: "08 Mei", category: "Material",    description: "Sika Latex 15 ltr",                 amount: 1080000, by: "Bu Sari" },
-  { id: "e9",  projectId: "p2", date: "15 Mei", category: "Material",    description: "Aquaproof Original 40 kg",          amount: 1520000, by: "Bu Sari" },
-  { id: "e10", projectId: "p2", date: "20 Mei", category: "Lain-lain",   description: "Konsumsi lapangan 3 hari",          amount: 360000,  by: "Dedi Saragih" },
+  { id: "e1",  projectId: "p1", date: _rd(12), category: "Material",    description: "Sika Top Seal-107 40 kg",          amount: 1800000, by: "Bu Sari" },
+  { id: "e2",  projectId: "p1", date: _rd(12), category: "Transport",   description: "Ongkos mobilisasi alat",            amount: 350000,  by: "Pak Suparman" },
+  { id: "e3",  projectId: "p1", date: _rd(10), category: "Material",    description: "Aquaproof Original 20 kg",          amount: 760000,  by: "Bu Sari" },
+  { id: "e4",  projectId: "p1", date: _rd(6),  category: "Lain-lain",   description: "Konsumsi lapangan",                 amount: 120000,  by: "Pak Suparman" },
+  { id: "e5",  projectId: "p1", date: _rd(4),  category: "Material",    description: "Net Fiber Glass 50 m²",             amount: 900000,  by: "Bu Sari" },
+  { id: "e6",  projectId: "p2", date: _rd(22), category: "Material",    description: "Primer Coat 10 ltr",                amount: 650000,  by: "Bu Sari" },
+  { id: "e7",  projectId: "p2", date: _rd(19), category: "Transport",   description: "Mobilisasi alat berat",             amount: 750000,  by: "Dedi Saragih" },
+  { id: "e8",  projectId: "p2", date: _rd(16), category: "Material",    description: "Sika Latex 15 ltr",                 amount: 1080000, by: "Bu Sari" },
+  { id: "e9",  projectId: "p2", date: _rd(9),  category: "Material",    description: "Aquaproof Original 40 kg",          amount: 1520000, by: "Bu Sari" },
+  { id: "e10", projectId: "p2", date: _rd(4),  category: "Lain-lain",   description: "Konsumsi lapangan 3 hari",          amount: 360000,  by: "Dedi Saragih" },
 ];
 
 export const WORK_REPORTS: WorkReport[] = [
-  { id: "r1", projectId: "p1", workerId: "w1", workerName: "Pak Suparman", workerShort: "SP", date: "24 Mei", note: "Aplikasi lapisan ke-2 waterproofing selesai 25m². Area selatan sudah kering sempurna.", photos: 3 },
-  { id: "r2", projectId: "p1", workerId: "w2", workerName: "Budi Hartono", workerShort: "BH", date: "24 Mei", note: "Bantu Pak Suparman di area selatan. Persiapan area utara untuk besok.", photos: 1 },
-  { id: "r3", projectId: "p2", workerId: "w4", workerName: "Dedi Saragih", workerShort: "DS", date: "24 Mei", note: "Waterproofing basement lantai B1 zona 3 selesai. Tunggu curing 24 jam.", photos: 2 },
-  { id: "r4", projectId: "p1", workerId: "w1", workerName: "Pak Suparman", workerShort: "SP", date: "23 Mei", note: "Primer coat zona tengah selesai. Cuaca panas, pengeringan lebih cepat dari estimasi.", photos: 2 },
-  { id: "r5", projectId: "p2", workerId: "w5", workerName: "Joko Sianturi", workerShort: "JS", date: "23 Mei", note: "Persiapan permukaan B2 zona 1. Ada retakan kecil, sudah ditambal dengan Sika Latex.", photos: 1 },
+  { id: "r1", projectId: "p1", workerId: "w1", workerName: "Pak Suparman",  workerShort: "SP", date: _rd(0), note: "Aplikasi lapisan ke-2 waterproofing selesai 25m². Area selatan sudah kering sempurna.", photos: 3 },
+  { id: "r2", projectId: "p1", workerId: "w2", workerName: "Budi Hartono",  workerShort: "BH", date: _rd(0), note: "Bantu Pak Suparman di area selatan. Persiapan area utara untuk besok.", photos: 1 },
+  { id: "r3", projectId: "p2", workerId: "w4", workerName: "Dedi Saragih",  workerShort: "DS", date: _rd(0), note: "Waterproofing basement lantai B1 zona 3 selesai. Tunggu curing 24 jam.", photos: 2 },
+  { id: "r4", projectId: "p1", workerId: "w1", workerName: "Pak Suparman",  workerShort: "SP", date: _rd(1), note: "Primer coat zona tengah selesai. Cuaca panas, pengeringan lebih cepat dari estimasi.", photos: 2 },
+  { id: "r5", projectId: "p2", workerId: "w5", workerName: "Joko Sianturi", workerShort: "JS", date: _rd(1), note: "Persiapan permukaan B2 zona 1. Ada retakan kecil, sudah ditambal dengan Sika Latex.", photos: 1 },
 ];
 
 export const MATERIAL_REQUESTS: MaterialRequest[] = [
-  { id: "mr1", projectId: "p1", workerId: "w1", workerName: "Pak Suparman", materialId: "m1", materialName: "Sika Top Seal-107",  qty: 20, unit: "kg",  date: "24 Mei", status: "Pending",   note: "Untuk lapisan ke-3 area utara" },
-  { id: "mr2", projectId: "p2", workerId: "w4", workerName: "Dedi Saragih", materialId: "m4", materialName: "Primer Coat",        qty: 5,  unit: "ltr", date: "24 Mei", status: "Pending" },
-  { id: "mr3", projectId: "p1", workerId: "w2", workerName: "Budi Hartono", materialId: "m3", materialName: "Kuas Roll 9\"",      qty: 4,  unit: "pcs", date: "23 Mei", status: "Disetujui" },
-  { id: "mr4", projectId: "p2", workerId: "w5", workerName: "Joko Sianturi", materialId: "m2", materialName: "Aquaproof Original", qty: 10, unit: "kg",  date: "22 Mei", status: "Disetujui" },
-  { id: "mr5", projectId: "p2", workerId: "w6", workerName: "Rahmat Sinaga", materialId: "m6", materialName: "Net Fiber Glass",   qty: 30, unit: "m²",  date: "21 Mei", status: "Ditolak",  note: "Stok cukup, ambil dari gudang" },
+  { id: "mr1", projectId: "p1", workerId: "w1", workerName: "Pak Suparman",  materialId: "m1", materialName: "Sika Top Seal-107",  qty: 20, unit: "kg",  date: _rd(0), status: "Pending",   note: "Untuk lapisan ke-3 area utara" },
+  { id: "mr2", projectId: "p2", workerId: "w4", workerName: "Dedi Saragih",  materialId: "m4", materialName: "Primer Coat",        qty: 5,  unit: "ltr", date: _rd(0), status: "Pending" },
+  { id: "mr3", projectId: "p1", workerId: "w2", workerName: "Budi Hartono",  materialId: "m3", materialName: "Kuas Roll 9\"",      qty: 4,  unit: "pcs", date: _rd(1), status: "Disetujui" },
+  { id: "mr4", projectId: "p2", workerId: "w5", workerName: "Joko Sianturi", materialId: "m2", materialName: "Aquaproof Original", qty: 10, unit: "kg",  date: _rd(2), status: "Disetujui" },
+  { id: "mr5", projectId: "p2", workerId: "w6", workerName: "Rahmat Sinaga", materialId: "m6", materialName: "Net Fiber Glass",    qty: 30, unit: "m²",  date: _rd(3), status: "Ditolak",  note: "Stok cukup, ambil dari gudang" },
 ];
 
 export const CHANGE_ORDERS: ChangeOrder[] = [
-  { id: "co1", projectId: "p1", date: "18 Mei", description: "Penambahan area waterproofing dak teras samping ±15m²", costImpact: 2250000, status: "Disetujui", requestedBy: "Bpk. Wijaya" },
-  { id: "co2", projectId: "p2", date: "10 Mei", description: "Perluasan cakupan ke lantai B3 zona tangga darurat",    costImpact: 8500000, status: "Menunggu",  requestedBy: "PT. Sentra Properti" },
-  { id: "co3", projectId: "p2", date: "15 Mei", description: "Material upgrade: Sika ke Mapei sistem zona kritis",    costImpact: 3200000, status: "Ditolak",   requestedBy: "Pak Suparman" },
+  { id: "co1", projectId: "p1", date: _rd(6),  description: "Penambahan area waterproofing dak teras samping ±15m²", costImpact: 2250000, status: "Disetujui", requestedBy: "Bpk. Wijaya" },
+  { id: "co2", projectId: "p2", date: _rd(14), description: "Perluasan cakupan ke lantai B3 zona tangga darurat",    costImpact: 8500000, status: "Menunggu",  requestedBy: "PT. Sentra Properti" },
+  { id: "co3", projectId: "p2", date: _rd(9),  description: "Material upgrade: Sika ke Mapei sistem zona kritis",    costImpact: 3200000, status: "Ditolak",   requestedBy: "Pak Suparman" },
 ];
 
 export const PAYROLL_MAY: PayrollEntry[] = [
@@ -272,19 +326,23 @@ export const PAYROLL_MAY: PayrollEntry[] = [
   { workerId: "w6", name: "Rahmat Sinaga", role: "Helper",        rate: 150000, projects: [
     { projectId: "p2", code: "KAS-2026-013", daysPresent: 19, daysHalf: 0 },
   ]},
+  { workerId: "w7", name: "Pak Anto",     role: "Tukang Senior", rate: 400000, projects: [
+    { projectId: "p1", code: "KAS-2026-014", daysPresent: 12, daysHalf: 0 },
+    { projectId: "p2", code: "KAS-2026-013", daysPresent: 10, daysHalf: 0 },
+  ]},
 ];
 
 export const CASHFLOW_MAY: CashFlowEntry[] = [
-  { date: "05 Mei", type: "in",  projectCode: "KAS-2026-013", description: "DP Termin I (50%)",                         amount: 43500000 },
-  { date: "12 Mei", type: "in",  projectCode: "KAS-2026-014", description: "DP (30%)",                                   amount: 5550000  },
-  { date: "12 Mei", type: "out", projectCode: "KAS-2026-014", description: "Material Sika + ongkos mobilisasi",          amount: 2150000  },
-  { date: "14 Mei", type: "out", projectCode: "KAS-2026-014", description: "Aquaproof Original 20 kg",                   amount: 760000   },
-  { date: "15 Mei", type: "out", projectCode: "KAS-2026-013", description: "Aquaproof Original 40 kg",                   amount: 1520000  },
-  { date: "18 Mei", type: "out", projectCode: "KAS-2026-014", description: "Konsumsi lapangan",                          amount: 120000   },
-  { date: "20 Mei", type: "in",  projectCode: "KAS-2026-014", description: "Termin 1 (30%)",                             amount: 5550000  },
-  { date: "20 Mei", type: "out", projectCode: "KAS-2026-014", description: "Net Fiber Glass 50m²",                       amount: 900000   },
-  { date: "20 Mei", type: "out", projectCode: "KAS-2026-013", description: "Konsumsi lapangan + Sika Latex",             amount: 1440000  },
-  { date: "24 Mei", type: "out", projectCode: "PENGGAJIAN",   description: "Upah Mei (parsial) – 6 pekerja",            amount: 19770000 },
+  { date: _rd(19), type: "in",  projectCode: "KAS-2026-013", description: "DP Termin I (50%)",                         amount: 43500000 },
+  { date: _rd(12), type: "in",  projectCode: "KAS-2026-014", description: "DP (30%)",                                   amount: 5550000  },
+  { date: _rd(12), type: "out", projectCode: "KAS-2026-014", description: "Material Sika + ongkos mobilisasi",          amount: 2150000  },
+  { date: _rd(10), type: "out", projectCode: "KAS-2026-014", description: "Aquaproof Original 20 kg",                   amount: 760000   },
+  { date: _rd(9),  type: "out", projectCode: "KAS-2026-013", description: "Aquaproof Original 40 kg",                   amount: 1520000  },
+  { date: _rd(6),  type: "out", projectCode: "KAS-2026-014", description: "Konsumsi lapangan",                          amount: 120000   },
+  { date: _rd(4),  type: "in",  projectCode: "KAS-2026-014", description: "Termin 1 (30%)",                             amount: 5550000  },
+  { date: _rd(4),  type: "out", projectCode: "KAS-2026-014", description: "Net Fiber Glass 50m²",                       amount: 900000   },
+  { date: _rd(4),  type: "out", projectCode: "KAS-2026-013", description: "Konsumsi lapangan + Sika Latex",             amount: 1440000  },
+  { date: _rd(0),  type: "out", projectCode: "PENGGAJIAN",   description: "Upah bulan ini (parsial) – 7 pekerja",      amount: 28570000 },
 ];
 
 export function payrollTotal(entry: PayrollEntry): number {
@@ -325,6 +383,34 @@ export const WEBSITE_FUNNEL = {
   waContacts:     5,
   projectsSigned: 1,
 };
+
+export type ProofSubmission = {
+  id: string;
+  projectId: string;
+  stageIdx: number;
+  stageLabel: string;
+  amount: number;
+  fileName: string;
+  fileType: "image" | "pdf";
+  submittedAt: string;
+  note?: string;
+};
+
+export const PROOF_SUBMISSIONS: ProofSubmission[] = [
+  {
+    id: "ps1", projectId: "p1", stageIdx: 2,
+    stageLabel: "Termin 2 (20%)", amount: 3700000,
+    fileName: "bukti-transfer-termin2-cemara.jpg", fileType: "image",
+    submittedAt: _rd(0) + ", 09:14",
+    note: "Transfer dari BCA rek 081xxx. Mohon dikonfirmasi.",
+  },
+  {
+    id: "ps2", projectId: "p2", stageIdx: 1,
+    stageLabel: "Termin 1 (30%)", amount: 26100000,
+    fileName: "bukti-bca-cambridge-t1.pdf", fileType: "pdf",
+    submittedAt: _rd(0) + ", 11:32",
+  },
+];
 
 export function fmtPhone(s: string): string {
   const d = (s || "").replace(/\D/g, "");

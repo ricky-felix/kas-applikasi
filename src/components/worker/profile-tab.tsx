@@ -1,5 +1,5 @@
 "use client";
-import { WORKERS, TODAY_SHORT, fmtIDR } from "@/lib/data";
+import { WORKERS, TODAY_SHORT } from "@/lib/data";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 export default function ProfileTab({
@@ -31,9 +31,8 @@ export default function ProfileTab({
 
       <div className="mt-4" style={{ borderTop: "1px solid var(--kas-line)" }}>
         {[
-          { l: "Nomor HP",    v: me.phone },
-          { l: "Tarif Harian", v: fmtIDR(me.rate) },
-          { l: "Peran",        v: "Pekerja Lapangan" },
+          { l: "Nomor HP", v: me.phone },
+          { l: "Peran",    v: me.isKepalaProyek ? `${me.role} · Kepala Proyek` : me.role },
         ].map((r, i) => (
           <div key={i} className="grid gap-3 py-3" style={{ gridTemplateColumns: "110px 1fr", borderBottom: "1px solid var(--kas-line-2)" }}>
             <MonoLabel size={10}>{r.l}</MonoLabel>

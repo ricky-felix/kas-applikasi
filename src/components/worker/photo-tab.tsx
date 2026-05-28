@@ -12,7 +12,7 @@ export default function PhotoTab({
 }: {
   proj: typeof PROJECTS[0];
   state: { photos: number };
-  setState: (fn: (s: { sessions: Session[]; absentProjectIds: string[]; selectedProjectId: string; photos: number; overtime: number }) => { sessions: Session[]; absentProjectIds: string[]; selectedProjectId: string; photos: number; overtime: number }) => void;
+  setState: (fn: (s: { sessions: Session[]; absentProjects: { id: string; reason: string }[]; selectedProjectId: string; photos: number; overtime: number }) => { sessions: Session[]; absentProjects: { id: string; reason: string }[]; selectedProjectId: string; photos: number; overtime: number }) => void;
   toast: (m: string) => void;
 }) {
   const [phase, setPhase] = useState("Sedang");

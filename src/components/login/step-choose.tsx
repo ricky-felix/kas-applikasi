@@ -1,42 +1,106 @@
+"use client";
+import { useEffect, useState } from "react";
 import { ACCOUNTS } from "@/lib/data";
 
-export function StepChoose({
-  onLogin,
-  onRegister,
+export function StepPhone({
+  onSubmit,
+  onSavedLogin,
   onQuickLogin,
 }: {
-  onLogin: () => void;
-  onRegister: () => void;
-  onQuickLogin: (phone: string) => void;
+  onSubmit: (phone: string) => void;
+  onSavedLogin: (phone: string, pin: string) => void;
+  onQuickLogin: (phone: string, pin: string) => void;
 }) {
+  const [phone, setPhone] = useState("");
+  const [saved, setSaved] = useState<{ phone: string; pin: string } | null>(null);
+
+  useEffect(() => {
+    try {
+      const p   = localStorage.getItem("kas-saved-phone");
+      const pin = localStorage.getItem("kas-saved-pin");
+      if (p && pin) setSaved({ phone: p, pin });
+    } catch {}
+  }, []);
+
+  const handleForget = () => {
+    try { localStorage.removeItem("kas-saved-phone"); localStorage.removeItem("kas-saved-pin"); } catch {}
+    setSaved(null);
+  };
+
+  const canSubmit = phone.length >= 10;
+
   return (
     <div className="flex flex-col flex-1 px-5 pt-6 pb-10">
       <div style={{ fontFamily: "var(--font-newsreader), serif", fontWeight: 400, fontSize: 34, lineHeight: 1.05, letterSpacing: "-0.01em" }}>
         Selamat<br /><em>datang.</em>
       </div>
       <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 10 }}>
-        Pilih opsi untuk melanjutkan
+        Masukkan nomor HP Anda
+      </div>
+
+      <div className="mt-8">
+        <input
+          type="tel"
+          inputMode="numeric"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 14))}
+          onKeyDown={(e) => { if (e.key === "Enter" && canSubmit) onSubmit(phone); }}
+          placeholder="08xxxxxxxxxx"
+          autoFocus
+          className="w-full px-4 py-4"
+          style={{
+            border: "1px solid var(--kas-ink)",
+            background: "var(--kas-paper)",
+            fontFamily: "var(--font-newsreader), serif",
+            fontSize: 26,
+            letterSpacing: "0.04em",
+            color: "var(--kas-ink)",
+            outline: "none",
+          }}
+        />
       </div>
 
       <div className="mt-auto flex flex-col gap-3">
-        <button
-          onClick={onLogin}
-          className="w-full py-5 flex flex-col items-start px-5"
-          style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", cursor: "pointer" }}
-        >
-          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.5 }}>01</span>
-          <span style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 26, fontWeight: 400, marginTop: 2 }}>Masuk <em>→</em></span>
-          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.5, marginTop: 4 }}>Pakai kode akses</span>
-        </button>
+        {saved && (
+          <div style={{ border: "1px solid var(--kas-cobalt)", background: "var(--kas-paper-2)", padding: "14px 16px", marginBottom: 4 }}>
+            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-cobalt)", marginBottom: 6 }}>
+              Akses cepat tersimpan
+            </div>
+            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--kas-ink-2)", marginBottom: 10, letterSpacing: "0.06em" }}>
+              {saved.phone}
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => onSavedLogin(saved.phone, saved.pin)}
+                style={{ flex: 1, border: "none", background: "var(--kas-cobalt)", color: "var(--kas-paper)", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", padding: "10px 0", cursor: "pointer" }}
+              >
+                Masuk Kembali →
+              </button>
+              <button
+                type="button"
+                onClick={handleForget}
+                style={{ border: "1px solid var(--kas-line)", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", padding: "10px 10px", cursor: "pointer" }}
+              >
+                Lupakan
+              </button>
+            </div>
+          </div>
+        )}
 
         <button
-          onClick={onRegister}
+          type="button"
+          onClick={() => { if (canSubmit) onSubmit(phone); }}
+          disabled={!canSubmit}
           className="w-full py-5 flex flex-col items-start px-5"
-          style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper)", color: "var(--kas-ink)", cursor: "pointer" }}
+          style={{ border: "none", background: canSubmit ? "var(--kas-ink)" : "var(--kas-line)", color: canSubmit ? "var(--kas-paper)" : "var(--kas-ink-3)", cursor: canSubmit ? "pointer" : "default" }}
         >
-          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--kas-ink-3)" }}>02</span>
-          <span style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 26, fontWeight: 400, marginTop: 2 }}>Daftar <em>→</em></span>
-          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginTop: 4 }}>Akun baru · verifikasi HP</span>
+          <span style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 26, fontWeight: 400 }}>
+            Lanjut <em>→</em>
+          </span>
+          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.5, marginTop: 4 }}>
+            Akan masuk ke halaman kode akses
+          </span>
         </button>
 
         <div className="mt-2">
@@ -44,18 +108,14 @@ export function StepChoose({
             Demo · pilih cepat
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {[
-              { phone: ACCOUNTS[0].phone, label: "Super",   pin: ACCOUNTS[0].pin },
-              { phone: ACCOUNTS[1].phone, label: "Bapak",   pin: ACCOUNTS[1].pin },
-              { phone: ACCOUNTS[2].phone, label: "Admin",   pin: ACCOUNTS[2].pin },
-              { phone: ACCOUNTS[3].phone, label: "Pekerja", pin: ACCOUNTS[3].pin },
-            ].map((item) => (
+            {ACCOUNTS.map((a) => (
               <button
-                key={item.phone}
-                onClick={() => onQuickLogin(item.phone)}
+                key={a.phone}
+                type="button"
+                onClick={() => onQuickLogin(a.phone, a.pin)}
                 style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", padding: "6px 10px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.1em", color: "var(--kas-ink-2)", cursor: "pointer", textTransform: "uppercase" }}
               >
-                {item.label} · {item.pin}
+                {a.name.split(" ")[0]} · {a.pin}
               </button>
             ))}
           </div>

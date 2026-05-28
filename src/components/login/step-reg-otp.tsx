@@ -35,12 +35,12 @@ export function StepRegOtp({
       <div className={`px-5 pt-4 pb-3 ${shake ? "animate-kas-shake" : ""}`}>
         <CodeBoxes value={otp} length={CODE_LEN} numeric autoFocus onChange={onChange} disabled={isPending} />
         <ErrorHint message={errorMsg} />
+        <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: isPending ? "var(--kas-cobalt)" : "var(--kas-ink-3)", marginTop: 10 }}>
+          {isPending ? "Memverifikasi…" : "Masukkan 6 digit OTP — otomatis lanjut"}
+        </div>
       </div>
 
-      <div className="px-5 mt-auto pb-10 flex flex-col gap-3">
-        <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: isPending ? "var(--kas-cobalt)" : "var(--kas-ink-3)" }}>
-          {isPending ? "Memverifikasi…" : "Masukkan 6 digit OTP"}
-        </div>
+      <div className="px-5 pb-6">
         <BackButton label="← Ganti nomor" onClick={onBack} />
       </div>
     </>

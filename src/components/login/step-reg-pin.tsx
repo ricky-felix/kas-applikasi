@@ -53,15 +53,15 @@ export function StepRegPin({
         </div>
         <CodeBoxes value={pin} length={CODE_LEN} onChange={onPinChange} disabled={isPending} />
         <ErrorHint message={errorMsg} />
-      </div>
-
-      <div className="px-5 mt-auto pb-10 flex flex-col gap-3">
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", border: "1px solid var(--kas-line)", background: "var(--kas-paper-2)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", border: "1px solid var(--kas-line)", background: "var(--kas-paper-2)", marginTop: 10 }}>
           <span style={{ fontSize: 12, flexShrink: 0 }}>⚠</span>
           <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.1em", color: "var(--kas-ink-3)", lineHeight: 1.5 }}>
             Simpan kode akses Anda dengan aman. Jangan bagikan kepada siapapun.
           </span>
         </div>
+      </div>
+
+      <div className="px-5 pb-6 flex flex-col gap-3">
         <button
           onClick={onSubmit}
           disabled={isPending}

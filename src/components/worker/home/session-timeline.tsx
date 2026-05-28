@@ -1,7 +1,7 @@
 import { PROJECTS } from "@/lib/data";
 import { Kicker, MonoLabel } from "@/components/primitives";
 
-type Session = { id: number; projectId: string; in: string; out: string | null };
+type Session = { id: number; projectId: string; in: string; out: string | null; lemburJam?: number; lemburEndsAt?: number };
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 
@@ -14,17 +14,7 @@ function fmtDurStr(mins: number) {
   return `${Math.floor(mins / 60)}j ${String(mins % 60).padStart(2, "0")}m`;
 }
 
-function restMinutes(sessions: Session[]) {
-  const closed = sessions.filter((s) => s.out !== null).sort((a, b) => toMin(a.in) - toMin(b.in));
-  let rest = 0;
-  for (let i = 1; i < closed.length; i++) {
-    const gap = toMin(closed[i].in) - toMin(closed[i - 1].out!);
-    if (gap > 0) rest += gap;
-  }
-  return rest;
-}
-
-type TimelineEntry = { kind: "session"; s: Session; idx: number } | { kind: "rest"; mins: number };
+type TimelineEntry = { kind: "session"; s: Session; idx: number };
 
 export function SessionTimeline({
   sessions,
@@ -36,17 +26,9 @@ export function SessionTimeline({
   totalLemburMin: number;
 }) {
   const totalWorkMin = sessions.reduce((s, x) => s + sessionMinutes(x.in, x.out), 0);
-  const totalRestMin = restMinutes(sessions);
 
   const closedSessions = sessions.filter((s) => s.out !== null).sort((a, b) => toMin(a.in) - toMin(b.in));
-  const timeline: TimelineEntry[] = [];
-  closedSessions.forEach((s, i) => {
-    timeline.push({ kind: "session", s, idx: i });
-    if (i < closedSessions.length - 1) {
-      const gap = toMin(closedSessions[i + 1].in) - toMin(s.out!);
-      if (gap > 0) timeline.push({ kind: "rest", mins: gap });
-    }
-  });
+  const timeline: TimelineEntry[] = closedSessions.map((s, idx) => ({ kind: "session", s, idx }));
   const liveSession = sessions.find((s) => s.out === null);
   if (liveSession) timeline.push({ kind: "session", s: liveSession, idx: closedSessions.length });
 
@@ -55,16 +37,6 @@ export function SessionTimeline({
       <Kicker no="03" label={`CATATAN WAKTU · ${sessions.length} SESI`} />
       <div style={{ borderTop: "1px solid var(--kas-ink)" }}>
         {timeline.map((entry, i) => {
-          if (entry.kind === "rest") {
-            return (
-              <div key={`rest-${i}`} className="flex items-center gap-3 py-2" style={{ borderBottom: "1px solid var(--kas-line-2)" }}>
-                <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 18, color: "var(--kas-ink-4)", minWidth: 24, textAlign: "center" }}>⋮</span>
-                <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                  Istirahat · {fmtDurStr(entry.mins)}
-                </span>
-              </div>
-            );
-          }
           const { s, idx } = entry;
           const proj = PROJECTS.find((p) => p.id === s.projectId);
           const live = s.out === null;
@@ -80,6 +52,7 @@ export function SessionTimeline({
                   <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", marginTop: 2, letterSpacing: "0.08em" }}>
                     {s.in} — {s.out ?? "berjalan"}
                     {live && <span style={{ color: "var(--kas-cobalt)", marginLeft: 6 }}>● LIVE</span>}
+                    {s.lemburJam && <span style={{ color: "var(--kas-ochre)", marginLeft: 6 }}>LEMBUR {s.lemburJam}J</span>}
                   </div>
                 </div>
                 <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: live ? "var(--kas-cobalt)" : "var(--kas-ink)", fontWeight: 500 }}>
@@ -91,10 +64,9 @@ export function SessionTimeline({
         })}
       </div>
 
-      <div className="grid mt-3" style={{ gridTemplateColumns: `repeat(${totalLemburMin > 0 ? 3 : 2}, 1fr)`, border: "1px solid var(--kas-ink)" }}>
+      <div className="grid mt-3" style={{ gridTemplateColumns: `repeat(${totalLemburMin > 0 ? 2 : 1}, 1fr)`, border: "1px solid var(--kas-ink)" }}>
         {[
-          { label: "Jam Kerja", value: fmtDurStr(totalWorkMin),   color: "var(--kas-ink)"   },
-          { label: "Istirahat", value: fmtDurStr(totalRestMin),   color: "var(--kas-ink-3)" },
+          { label: "Jam Kerja", value: fmtDurStr(totalWorkMin), color: "var(--kas-ink)" },
           ...(totalLemburMin > 0 ? [{ label: "Lembur", value: fmtDurStr(totalLemburMin), color: "var(--kas-ochre)" }] : []),
         ].map((item, i, arr) => (
           <div key={item.label} className="px-3 py-3" style={{ borderRight: i < arr.length - 1 ? "1px solid var(--kas-line)" : "none" }}>

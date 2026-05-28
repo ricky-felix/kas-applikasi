@@ -18,14 +18,14 @@ export function ProjectSelector({
   sessions,
   selectedProjectId,
   activeSession,
-  absentProjectIds,
+  absentProjects,
   onSelect,
 }: {
   projects: typeof PROJECTS;
   sessions: Session[];
   selectedProjectId: string;
   activeSession: Session | undefined;
-  absentProjectIds: string[];
+  absentProjects: { id: string; reason: string }[];
   onSelect: (id: string) => void;
 }) {
   const minByProj = (pid: string) =>
@@ -38,7 +38,8 @@ export function ProjectSelector({
         {projects.map((p) => {
           const isSelected    = p.id === selectedProjectId;
           const isActive      = activeSession?.projectId === p.id;
-          const isAbsentProj  = absentProjectIds.includes(p.id);
+          const absentEntry   = absentProjects.find((a) => a.id === p.id);
+          const isAbsentProj  = !!absentEntry;
           const mins          = minByProj(p.id);
           const closed        = sessions.filter((s) => s.projectId === p.id && s.out !== null).length;
 
@@ -56,7 +57,7 @@ export function ProjectSelector({
               <div className="min-w-0">
                 <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 16, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
                 <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", marginTop: 3, letterSpacing: "0.08em" }}>
-                  {isActive ? `Sedang bekerja · sejak ${activeSession?.in}` : isAbsentProj ? "Tidak hadir" : mins > 0 ? `${fmtDurStr(mins)} · ${closed} sesi` : p.address}
+                  {isActive ? `Sedang bekerja · sejak ${activeSession?.in}` : isAbsentProj ? `Tidak hadir · ${absentEntry!.reason}` : mins > 0 ? `${fmtDurStr(mins)} · ${closed} sesi` : p.address}
                 </div>
               </div>
               <MonoLabel size={9}>{isActive ? "AKTIF" : isAbsentProj ? "ABSEN" : closed > 0 ? "SELESAI" : "MULAI"}</MonoLabel>
