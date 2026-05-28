@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { logout } from "@/app/actions";
-import SuperAdmin from "@/components/kas/super-admin";
+import SuperAdmin from "@/screens/super-admin";
 
 export default async function SuperAdminPage() {
   const session = await getSession();

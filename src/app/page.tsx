@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession, roleToPath } from "@/lib/session";
-import LoginScreen from "@/components/kas/login";
+import LoginScreen from "@/screens/login";
 
 export default async function LoginPage() {
   const session = await getSession();

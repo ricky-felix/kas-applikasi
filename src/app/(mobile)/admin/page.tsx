@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { logout } from "@/app/actions";
-import AdminMobile from "@/components/kas/admin-mobile";
+import AdminMobile from "@/screens/admin";
 
 export default async function AdminPage() {
   const session = await getSession();
