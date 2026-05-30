@@ -115,7 +115,7 @@ export function StepPhone({
                 onClick={() => onQuickLogin(a.phone, a.pin)}
                 style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", padding: "6px 10px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.1em", color: "var(--kas-ink-2)", cursor: "pointer", textTransform: "uppercase" }}
               >
-                {a.name.split(" ")[0]} · {a.pin}
+                {a.role.replace("_", " ")} · {a.pin}
               </button>
             ))}
           </div>
