@@ -4,11 +4,19 @@ import { CHANGE_ORDERS, PROJECTS, fmtIDRshort } from "@/lib/data";
 import { TopBar, SectionHead, Footer } from "./shared";
 
 type CoStatus = "Menunggu" | "Disetujui" | "Ditolak";
+type Confirm = { id: string; action: "Disetujui" | "Ditolak"; label: string } | null;
 
 export default function ChangeOrdersPage() {
 	const [coStatuses, setCoStatuses] = useState<Record<string, CoStatus>>(() =>
 		Object.fromEntries(CHANGE_ORDERS.map((c) => [c.id, c.status as CoStatus])),
 	);
+	const [confirm, setConfirm] = useState<Confirm>(null);
+
+	const doConfirm = () => {
+		if (!confirm) return;
+		setCoStatuses((p) => ({ ...p, [confirm.id]: confirm.action }));
+		setConfirm(null);
+	};
 
 	const pendingCount = CHANGE_ORDERS.filter(
 		(c) => coStatuses[c.id] === "Menunggu",
@@ -21,6 +29,21 @@ export default function ChangeOrdersPage() {
 	};
 
 	return (
+		<>
+		{confirm && (
+			<div className="fixed inset-0 grid place-items-center" style={{ background: "rgba(22,28,44,0.5)", zIndex: 50 }} onClick={() => setConfirm(null)}>
+				<div onClick={(e) => e.stopPropagation()} style={{ width: 380, background: "var(--kas-paper)", border: "1px solid var(--kas-ink)", padding: "28px 32px" }}>
+					<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 12 }}>Konfirmasi</div>
+					<p style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, fontWeight: 400, letterSpacing: "-0.01em", margin: "0 0 20px" }}>{confirm.label}</p>
+					<div className="flex gap-2.5 justify-end">
+						<button type="button" onClick={() => setConfirm(null)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "10px 20px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
+						<button type="button" onClick={doConfirm} style={{ background: confirm.action === "Disetujui" ? "var(--kas-ink)" : "var(--kas-rust)", color: "var(--kas-paper)", border: "none", padding: "10px 20px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>
+							{confirm.action === "Disetujui" ? "Ya, Setujui" : "Ya, Tolak"}
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
 		<div className="px-9 py-7 pb-14">
 			<TopBar title="Ubah Order" />
 			<SectionHead no="11b" kicker={`${pendingCount} MENUNGGU KEPUTUSAN`}>
@@ -111,9 +134,8 @@ export default function ChangeOrdersPage() {
 							{status === "Menunggu" ? (
 								<div className="flex gap-1.5">
 									<button
-										onClick={() =>
-											setCoStatuses((p) => ({ ...p, [co.id]: "Disetujui" }))
-										}
+										type="button"
+										onClick={() => setConfirm({ id: co.id, action: "Disetujui", label: `Setujui ubah order dari ${co.requestedBy}?` })}
 										style={{
 											background: "var(--kas-ink)",
 											color: "var(--kas-paper)",
@@ -129,9 +151,8 @@ export default function ChangeOrdersPage() {
 										Setujui
 									</button>
 									<button
-										onClick={() =>
-											setCoStatuses((p) => ({ ...p, [co.id]: "Ditolak" }))
-										}
+										type="button"
+										onClick={() => setConfirm({ id: co.id, action: "Ditolak", label: `Tolak ubah order dari ${co.requestedBy}?` })}
 										style={{
 											background: "transparent",
 											border: "1px solid var(--kas-line)",
@@ -157,5 +178,6 @@ export default function ChangeOrdersPage() {
 
 			<Footer />
 		</div>
+		</>
 	);
 }

@@ -6,10 +6,12 @@ export function StepPhone({
   onSubmit,
   onSavedLogin,
   onQuickLogin,
+  onRegister,
 }: {
   onSubmit: (phone: string) => void;
   onSavedLogin: (phone: string, pin: string) => void;
   onQuickLogin: (phone: string, pin: string) => void;
+  onRegister?: () => void;
 }) {
   const [phone, setPhone] = useState("");
   const [saved, setSaved] = useState<{ phone: string; pin: string } | null>(null);
@@ -102,6 +104,18 @@ export function StepPhone({
             Akan masuk ke halaman kode akses
           </span>
         </button>
+
+        {onRegister && (
+          <div className="flex justify-center" style={{ marginTop: 2, marginBottom: 2 }}>
+            <button
+              type="button"
+              onClick={onRegister}
+              style={{ border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0", textDecoration: "underline", textUnderlineOffset: 3 }}
+            >
+              Belum punya akun? Daftar →
+            </button>
+          </div>
+        )}
 
         <div className="mt-2">
           <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 6 }}>

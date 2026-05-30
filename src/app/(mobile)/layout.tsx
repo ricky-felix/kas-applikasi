@@ -18,6 +18,14 @@ export default function MobileLayout({ children }: { children: React.ReactNode }
         style={{ background: "var(--kas-paper)" }}
       >
         {children}
+        <div
+          className="absolute inset-x-0 bottom-0 flex justify-center items-center py-1 pointer-events-none"
+          style={{ zIndex: 999 }}
+        >
+          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 7, letterSpacing: "0.24em", textTransform: "uppercase", color: "rgba(22,28,44,0.22)" }}>
+            Demo · Data Fiktif
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -1,26 +1,69 @@
 "use client";
 import { useState } from "react";
-import { MATERIALS, fmtIDR } from "@/lib/data";
+import { MATERIALS, type Material, fmtIDR } from "@/lib/data";
 import { MonoLabel, ProgressBar } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
+const UNITS = ["kg", "ltr", "pcs", "m²", "m", "set", "roll", "sak"];
+const SUPPLIERS = Array.from(new Set(MATERIALS.map((m) => m.supplier)));
+
+type ModalState = "none" | "add" | "restock";
+
 export default function MaterialPage() {
   const [view, setView] = useState<"stock" | "usage">("stock");
+  const [materials, setMaterials] = useState<Material[]>(MATERIALS);
+  const [modal, setModal] = useState<ModalState>("none");
   const [restockId, setRestockId] = useState<string | null>(null);
+  const [restockQty, setRestockQty] = useState("");
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
-  const lowCount = MATERIALS.filter((m) => m.stock <= m.minStock).length;
-  const totalValue = MATERIALS.reduce((s, m) => s + m.stock * m.unitPrice, 0);
 
-  const restockMaterial = restockId ? MATERIALS.find((m) => m.id === restockId) : null;
+  // Add new material form state
+  const [newName,        setNewName]        = useState("");
+  const [newUnit,        setNewUnit]        = useState("kg");
+  const [newSupplier,    setNewSupplier]    = useState(SUPPLIERS[0] ?? "");
+  const [newSupplierNew, setNewSupplierNew] = useState("");
+  const [newPrice,       setNewPrice]       = useState("");
+  const [newMin,         setNewMin]         = useState("");
+  const [newBudget,      setNewBudget]      = useState("");
+
+  const lowCount   = materials.filter((m) => m.stock <= m.minStock).length;
+  const totalValue = materials.reduce((s, m) => s + m.stock * m.unitPrice, 0);
+
+  const restockMaterial = restockId ? materials.find((m) => m.id === restockId) : null;
+  const resolvedSupplier = newSupplier === "__new__" ? newSupplierNew.trim() : newSupplier;
+  const addReady = newName.trim() && resolvedSupplier && newPrice && newMin && newBudget;
+
+  const closeModal = () => {
+    setModal("none");
+    setRestockId(null);
+    setRestockQty("");
+    setNewName(""); setNewUnit("kg"); setNewSupplier(SUPPLIERS[0] ?? "");
+    setNewSupplierNew(""); setNewPrice(""); setNewMin(""); setNewBudget("");
+  };
+
+  const openRestock = (id: string) => { setRestockId(id); setRestockQty(""); setModal("restock"); };
 
   const handleConfirmRestock = () => {
+    const qty = Number(restockQty);
+    if (!restockId || !qty || qty <= 0) return;
+    setMaterials((prev) => prev.map((m) => m.id === restockId ? { ...m, stock: m.stock + qty } : m));
     setConfirmedId(restockId);
-    setRestockId(null);
+    closeModal();
     setTimeout(() => setConfirmedId(null), 2000);
   };
 
+  const handleAddMaterial = () => {
+    if (!addReady) return;
+    setMaterials((prev) => [...prev, {
+      id: `m${Date.now()}`, name: newName.trim(), unit: newUnit,
+      unitPrice: Number(newPrice), supplier: resolvedSupplier,
+      stock: 0, minStock: Number(newMin), budget: Number(newBudget), used: 0,
+    }]);
+    closeModal();
+  };
+
   const summaryStats = [
-    { n: "01", l: "Total Item",   v: String(MATERIALS.length).padStart(2, "0"), accentColor: "var(--kas-cobalt)", highlight: false },
+    { n: "01", l: "Total Item",   v: String(materials.length).padStart(2, "0"), accentColor: "var(--kas-cobalt)", highlight: false },
     { n: "02", l: "Stok Tipis",   v: String(lowCount).padStart(2, "0"),          accentColor: "var(--kas-rust)",   highlight: lowCount > 0 },
     { n: "03", l: "Nilai Gudang", v: fmtIDR(totalValue),                          accentColor: "var(--kas-moss)",   highlight: false },
   ];
@@ -28,7 +71,7 @@ export default function MaterialPage() {
   return (
     <div className="px-9 py-7 pb-14">
       <TopBar title="Material" />
-      <SectionHead no="05" kicker={`${MATERIALS.length} ITEM · GUDANG`}>
+      <SectionHead no="05" kicker={`${materials.length} ITEM · GUDANG`}>
         Inventori, <em>terkelola.</em>
       </SectionHead>
 
@@ -41,13 +84,22 @@ export default function MaterialPage() {
         ))}
       </div>
 
-      <div className="flex mb-6" style={{ borderTop: "1px solid var(--kas-ink)" }}>
-        {[{ k: "stock", l: "Stok Gudang" }, { k: "usage", l: "Pemakaian Proyek" }].map((t) => (
-          <button key={t.k} onClick={() => setView(t.k as "stock" | "usage")} style={{ border: "none", background: view === t.k ? "var(--kas-ink)" : "transparent", color: view === t.k ? "var(--kas-paper)" : "var(--kas-ink-2)", padding: "10px 20px", cursor: "pointer", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", borderRight: "1px solid var(--kas-line)" }}>
-            {t.l}
-          </button>
-        ))}
+      <div className="flex items-center justify-between mb-0" style={{ borderTop: "1px solid var(--kas-ink)" }}>
+        <div className="flex">
+          {[{ k: "stock", l: "Stok Gudang" }, { k: "usage", l: "Pemakaian Proyek" }].map((t) => (
+            <button key={t.k} onClick={() => setView(t.k as "stock" | "usage")} style={{ border: "none", background: view === t.k ? "var(--kas-ink)" : "transparent", color: view === t.k ? "var(--kas-paper)" : "var(--kas-ink-2)", padding: "10px 20px", cursor: "pointer", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", borderRight: "1px solid var(--kas-line)" }}>
+              {t.l}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setModal("add")}
+          style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-ink)", color: "var(--kas-paper)", padding: "8px 18px", cursor: "pointer", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase" }}
+        >
+          + Produk Baru
+        </button>
       </div>
+      <div className="mb-6" />
 
       {view === "stock" && (
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -65,7 +117,7 @@ export default function MaterialPage() {
             </tr>
           </thead>
           <tbody>
-            {MATERIALS.map((m, i) => {
+            {materials.map((m, i) => {
               const low = m.stock <= m.minStock;
               const isConfirmed = confirmedId === m.id;
               return (
@@ -91,7 +143,7 @@ export default function MaterialPage() {
                     {isConfirmed ? (
                       <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-moss)", fontWeight: 600 }}>✓ Ditambahkan</span>
                     ) : (
-                      <button onClick={() => setRestockId(m.id)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "5px 10px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>
+                      <button onClick={() => openRestock(m.id)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "5px 10px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>
                         Restock
                       </button>
                     )}
@@ -105,7 +157,7 @@ export default function MaterialPage() {
 
       {view === "usage" && (
         <div style={{ borderTop: "1px solid var(--kas-ink)" }}>
-          {MATERIALS.map((m, i) => {
+          {materials.map((m, i) => {
             const pct = Math.round((m.used / m.budget) * 100);
             const low = pct >= 90;
             return (
@@ -133,12 +185,13 @@ export default function MaterialPage() {
 
       <Footer />
 
-      {restockId && restockMaterial && (
-        <div className="fixed inset-0 grid place-items-center" style={{ background: "rgba(22,28,44,0.5)", zIndex: 50 }} onClick={() => setRestockId(null)}>
+      {/* Restock modal */}
+      {modal === "restock" && restockMaterial && (
+        <div className="fixed inset-0 grid place-items-center" style={{ background: "rgba(22,28,44,0.5)", zIndex: 50 }} onClick={closeModal}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: 420, background: "var(--kas-paper)", border: "1px solid var(--kas-ink)", padding: "28px 32px" }}>
             <div className="flex justify-between items-center mb-4">
               <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--kas-ink-3)" }}>RESTOCK MATERIAL</span>
-              <button onClick={() => setRestockId(null)} style={{ border: "none", background: "transparent", fontFamily: "var(--font-newsreader), serif", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
+              <button onClick={closeModal} style={{ border: "none", background: "transparent", fontFamily: "var(--font-newsreader), serif", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
             <h2 style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em", margin: "0 0 16px" }}>{restockMaterial.name}. <em>Restock.</em></h2>
             <div className="mb-4 py-3" style={{ borderTop: "1px solid var(--kas-line)", borderBottom: "1px solid var(--kas-line)" }}>
@@ -147,11 +200,96 @@ export default function MaterialPage() {
             </div>
             <div className="mb-5">
               <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Tambah stok ({restockMaterial.unit})</div>
-              <input type="number" placeholder="0" className="w-full px-3 py-2.5" style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }} />
+              <input
+                type="number" placeholder="0" value={restockQty}
+                onChange={(e) => setRestockQty(e.target.value)}
+                className="w-full px-3 py-2.5"
+                style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, outline: "none", boxSizing: "border-box" }}
+              />
             </div>
             <div className="flex gap-2.5 justify-end">
-              <button onClick={() => setRestockId(null)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
-              <button onClick={handleConfirmRestock} style={{ background: "var(--kas-ink)", color: "var(--kas-paper)", border: "none", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Simpan</button>
+              <button onClick={closeModal} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
+              <button
+                onClick={handleConfirmRestock}
+                disabled={!restockQty || Number(restockQty) <= 0}
+                style={{ background: !restockQty || Number(restockQty) <= 0 ? "var(--kas-line)" : "var(--kas-ink)", color: "var(--kas-paper)", border: "none", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: !restockQty || Number(restockQty) <= 0 ? "not-allowed" : "pointer" }}
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add new material modal */}
+      {modal === "add" && (
+        <div className="fixed inset-0 grid place-items-center" style={{ background: "rgba(22,28,44,0.5)", zIndex: 50 }} onClick={closeModal}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: 480, background: "var(--kas-paper)", border: "1px solid var(--kas-ink)", padding: "28px 32px", maxHeight: "90vh", overflowY: "auto" }}>
+            <div className="flex justify-between items-center mb-4">
+              <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--kas-ink-3)" }}>TAMBAH MATERIAL BARU</span>
+              <button onClick={closeModal} style={{ border: "none", background: "transparent", fontFamily: "var(--font-newsreader), serif", fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
+            </div>
+            <h2 style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em", margin: "0 0 20px" }}>Produk, <em>baru.</em></h2>
+
+            <div className="flex flex-col gap-3">
+              <div>
+                <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Nama Material <span style={{ color: "var(--kas-rust)" }}>*</span></div>
+                <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Contoh: Sika Top Seal-107"
+                  style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", boxSizing: "border-box" }} />
+              </div>
+
+              <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                <div>
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Satuan <span style={{ color: "var(--kas-rust)" }}>*</span></div>
+                  <select title="Satuan" value={newUnit} onChange={(e) => setNewUnit(e.target.value)}
+                    style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", cursor: "pointer" }}>
+                    {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Harga Satuan (Rp) <span style={{ color: "var(--kas-rust)" }}>*</span></div>
+                  <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="0"
+                    style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", boxSizing: "border-box" }} />
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Supplier <span style={{ color: "var(--kas-rust)" }}>*</span></div>
+                <select title="Supplier" value={newSupplier} onChange={(e) => setNewSupplier(e.target.value)}
+                  style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", cursor: "pointer" }}>
+                  {SUPPLIERS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  <option value="__new__">+ Supplier baru...</option>
+                </select>
+                {newSupplier === "__new__" && (
+                  <input type="text" value={newSupplierNew} onChange={(e) => setNewSupplierNew(e.target.value)} placeholder="Nama supplier baru"
+                    className="mt-2"
+                    style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", boxSizing: "border-box" }} />
+                )}
+              </div>
+
+              <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                <div>
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Min. Stok <span style={{ color: "var(--kas-rust)" }}>*</span></div>
+                  <input type="number" value={newMin} onChange={(e) => setNewMin(e.target.value)} placeholder="0"
+                    style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Budget (unit) <span style={{ color: "var(--kas-rust)" }}>*</span></div>
+                  <input type="number" value={newBudget} onChange={(e) => setNewBudget(e.target.value)} placeholder="0"
+                    style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", boxSizing: "border-box" }} />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 justify-end mt-6">
+              <button onClick={closeModal} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
+              <button
+                onClick={handleAddMaterial}
+                disabled={!addReady}
+                style={{ background: addReady ? "var(--kas-ink)" : "var(--kas-line)", color: "var(--kas-paper)", border: "none", padding: "11px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: addReady ? "pointer" : "not-allowed" }}
+              >
+                Tambah
+              </button>
             </div>
           </div>
         </div>

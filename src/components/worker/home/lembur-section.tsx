@@ -72,7 +72,6 @@ function ActiveLembur({ session, onStop }: { session: LemburSession; onStop: () 
           </MonoLabel>
         </div>
 
-        {/* Countdown */}
         <div
           className="flex items-end gap-1"
           style={{ fontFamily: "var(--font-newsreader), serif", fontWeight: 500, letterSpacing: "-0.02em", lineHeight: 1 }}
@@ -197,10 +196,8 @@ export function LemburSection({
     <div className="mt-5">
       <Kicker no="04" label={`LEMBUR${lemburSessions.length > 0 ? ` · ${fmtDurStr(totalDone)} tercatat` : ""}`} />
 
-      {/* ── ACTIVE: countdown + stop ─────────────────────────────────────── */}
       {lemburActive && <ActiveLembur session={lemburActive} onStop={handleStop} />}
 
-      {/* ── PICK REASON ──────────────────────────────────────────────────── */}
       {!lemburActive && phase === "pick-reason" && (
         <div>
           <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.2, marginBottom: 14, color: "var(--kas-ink-2)" }}>
@@ -208,13 +205,9 @@ export function LemburSection({
           </div>
           <div className="flex flex-col gap-2">
             {LEMBUR_REASONS.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => handlePickReason(r.id)}
+              <button key={r.id} type="button" onClick={() => handlePickReason(r.id)}
                 className="w-full flex items-center gap-4 text-left"
-                style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", padding: "16px 16px", cursor: "pointer" }}
-              >
+                style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", padding: "16px 16px", cursor: "pointer" }}>
                 <span style={{ fontSize: 22, flexShrink: 0 }}>{r.icon}</span>
                 <span style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 18, lineHeight: 1.2 }}>{r.label}</span>
               </button>
@@ -223,70 +216,45 @@ export function LemburSection({
         </div>
       )}
 
-      {/* ── PICK PROJECT ─────────────────────────────────────────────────── */}
       {!lemburActive && phase === "pick-project" && (
         <div>
-          <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.2, marginBottom: 4, color: "var(--kas-ink-2)" }}>
-            Di proyek mana?
-          </div>
-          <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ochre)", marginBottom: 14 }}>
-            {reasonLabel}
-          </div>
+          <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.2, marginBottom: 4, color: "var(--kas-ink-2)" }}>Di proyek mana?</div>
+          <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ochre)", marginBottom: 14 }}>{reasonLabel}</div>
           <div className="flex flex-col gap-2">
             {projects.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => handlePickProject(p.id)}
+              <button key={p.id} type="button" onClick={() => handlePickProject(p.id)}
                 className="w-full text-left"
-                style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", padding: "16px 16px", cursor: "pointer" }}
-              >
+                style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", padding: "16px 16px", cursor: "pointer" }}>
                 <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 18 }}>{p.address}</div>
                 <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", marginTop: 3, letterSpacing: "0.1em" }}>{p.code}</div>
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={handleCancel}
-            style={{ marginTop: 10, border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0" }}
-          >
+          <button type="button" onClick={handleCancel}
+            style={{ marginTop: 10, border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0" }}>
             ← Ubah alasan
           </button>
         </div>
       )}
 
-      {/* ── PENDING ──────────────────────────────────────────────────────── */}
       {!lemburActive && phase === "pending" && (
         <div style={{ border: "2px solid var(--kas-ochre)" }}>
           <div style={{ background: "var(--kas-ochre)", padding: "14px 16px" }}>
-            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>
-              Menunggu persetujuan pemilik
-            </div>
-            <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 18, lineHeight: 1.2 }}>
-              {pendingProj?.address}
-            </div>
-            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, marginTop: 3, opacity: 0.7 }}>
-              {reasonLabel}
-            </div>
+            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 4 }}>Menunggu persetujuan pemilik</div>
+            <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 18, lineHeight: 1.2 }}>{pendingProj?.address}</div>
+            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, marginTop: 3, opacity: 0.7 }}>{reasonLabel}</div>
           </div>
           <div style={{ padding: "14px 16px" }}>
             <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
               Demo — simulasikan persetujuan pemilik
             </div>
             <div className="grid gap-2" style={{ gridTemplateColumns: "1fr auto" }}>
-              <button
-                type="button"
-                onClick={handleApprove}
-                style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", padding: "14px 0", fontFamily: "var(--font-newsreader), serif", fontSize: 18, cursor: "pointer" }}
-              >
+              <button type="button" onClick={handleApprove}
+                style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", padding: "14px 0", fontFamily: "var(--font-newsreader), serif", fontSize: 18, cursor: "pointer" }}>
                 ✓ Setujui
               </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                style={{ border: "1px solid var(--kas-line)", background: "transparent", color: "var(--kas-ink-3)", padding: "14px 16px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}
-              >
+              <button type="button" onClick={handleCancel}
+                style={{ border: "1px solid var(--kas-line)", background: "transparent", color: "var(--kas-ink-3)", padding: "14px 16px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>
                 Batal
               </button>
             </div>
@@ -294,103 +262,49 @@ export function LemburSection({
         </div>
       )}
 
-      {/* ── APPROVED: pick hours ─────────────────────────────────────────── */}
       {!lemburActive && phase === "approved" && (
         <div>
           <div style={{ background: "var(--kas-moss-soft)", border: "1px solid var(--kas-moss)", padding: "12px 16px", marginBottom: 14 }}>
-            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-moss-ink)", marginBottom: 2 }}>
-              ✓ Disetujui
-            </div>
-            <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 16, color: "var(--kas-moss-ink)" }}>
-              {pendingProj?.address} · {reasonLabel}
-            </div>
+            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-moss-ink)", marginBottom: 2 }}>✓ Disetujui</div>
+            <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 16, color: "var(--kas-moss-ink)" }}>{pendingProj?.address} · {reasonLabel}</div>
           </div>
-
-          <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.2, marginBottom: 14, color: "var(--kas-ink-2)" }}>
-            Berapa jam lembur?
-          </div>
-
+          <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.2, marginBottom: 14, color: "var(--kas-ink-2)" }}>Berapa jam lembur?</div>
           <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
             {LEMBUR_HOURS.map((h) => (
-              <button
-                key={h}
-                type="button"
-                onClick={() => handlePickHours(h)}
-                style={{
-                  border: "1px solid var(--kas-ink)",
-                  background: "var(--kas-paper)",
-                  color: "var(--kas-ink)",
-                  padding: "18px 0",
-                  fontFamily: "var(--font-newsreader), serif",
-                  fontSize: 26,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-              >
+              <button key={h} type="button" onClick={() => handlePickHours(h)}
+                style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper)", color: "var(--kas-ink)", padding: "18px 0", fontFamily: "var(--font-newsreader), serif", fontSize: 26, fontWeight: 500, cursor: "pointer", textAlign: "center" }}>
                 {h}<span style={{ fontSize: 12 }}>j</span>
               </button>
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={handleCancel}
-            style={{ marginTop: 10, border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0" }}
-          >
+          <button type="button" onClick={handleCancel}
+            style={{ marginTop: 10, border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0" }}>
             ← Batal
           </button>
         </div>
       )}
 
-      {/* ── PICK-HOURS confirm ───────────────────────────────────────────── */}
       {!lemburActive && phase === "pick-hours" && (
         <div>
           <div style={{ background: "var(--kas-paper-2)", border: "1px solid var(--kas-line)", padding: "16px" }}>
-            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 6 }}>
-              Ringkasan lembur
-            </div>
-            <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.2, marginBottom: 2 }}>
-              {pendingProj?.address}
-            </div>
-            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", letterSpacing: "0.08em", marginBottom: 8 }}>
-              {reasonLabel}
-            </div>
+            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 6 }}>Ringkasan lembur</div>
+            <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.2, marginBottom: 2 }}>{pendingProj?.address}</div>
+            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", letterSpacing: "0.08em", marginBottom: 8 }}>{reasonLabel}</div>
             <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 36, fontWeight: 500, lineHeight: 1, color: "var(--kas-ochre)" }}>
               {selectedHours}<span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 14, color: "var(--kas-ink-3)", marginLeft: 6 }}>JAM</span>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={handleStart}
-            className="w-full mt-2"
-            style={{
-              border: "none",
-              background: "var(--kas-ochre)",
-              color: "var(--kas-ink)",
-              fontFamily: "var(--font-newsreader), serif",
-              fontWeight: 500,
-              fontSize: 26,
-              padding: "22px 16px",
-              cursor: "pointer",
-              letterSpacing: "-0.01em",
-            }}
-          >
+          <button type="button" onClick={handleStart} className="w-full mt-2"
+            style={{ border: "none", background: "var(--kas-ochre)", color: "var(--kas-ink)", fontFamily: "var(--font-newsreader), serif", fontWeight: 500, fontSize: 26, padding: "22px 16px", cursor: "pointer", letterSpacing: "-0.01em" }}>
             Mulai <em>lembur.</em>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setPhase("approved")}
-            style={{ marginTop: 10, border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0" }}
-          >
+          <button type="button" onClick={() => setPhase("approved")}
+            style={{ marginTop: 10, border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0" }}>
             ← Ubah durasi
           </button>
         </div>
       )}
 
-      {/* ── Past sessions ────────────────────────────────────────────────── */}
       {pastSessions.length > 0 && (
         <div className="mt-4" style={{ borderTop: "1px solid var(--kas-line-2)" }}>
           {pastSessions.map((ls) => {
@@ -400,17 +314,12 @@ export function LemburSection({
                 <div>
                   <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 14 }}>{proj?.address ?? "Lembur"}</div>
                   <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", marginTop: 1, letterSpacing: "0.08em" }}>
-                    {ls.in} — {ls.out}
-                    {ls.note && <span style={{ marginLeft: 6 }}>· {ls.note}</span>}
+                    {ls.in} — {ls.out}{ls.note && <span style={{ marginLeft: 6 }}>· {ls.note}</span>}
                   </div>
                 </div>
                 <div className="text-right">
-                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--kas-ochre)", fontWeight: 500 }}>
-                    {fmtDurStr(sessionMinutes(ls.in, ls.out))}
-                  </span>
-                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "var(--kas-ink-4)", letterSpacing: "0.1em", marginTop: 1 }}>
-                    {ls.hours}j disetujui
-                  </div>
+                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: "var(--kas-ochre)", fontWeight: 500 }}>{fmtDurStr(sessionMinutes(ls.in, ls.out))}</span>
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "var(--kas-ink-4)", letterSpacing: "0.1em", marginTop: 1 }}>{ls.hours}j disetujui</div>
                 </div>
               </div>
             );

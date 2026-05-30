@@ -3,7 +3,18 @@ import { useState } from "react";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 type SessionEntry  = { in: string; out: string; isLembur?: boolean; lemburHours?: number };
-type DayEntry      = { day: number; dayName: string; project: string; projCode: string; status: "Hadir" | "Setengah Hari" | "Tidak Hadir"; sessions: SessionEntry[] };
+type SelfieStamp   = { time: string; kind: "masuk" | "lembur" };
+type LaporanLog    = { note: string; photos: number };
+type DayEntry      = {
+  day: number;
+  dayName: string;
+  project: string;
+  projCode: string;
+  status: "Hadir" | "Setengah Hari" | "Tidak Hadir";
+  sessions: SessionEntry[];
+  selfies?: SelfieStamp[];
+  laporan?: LaporanLog;
+};
 type MonthData     = { monthKey: string; label: string; year: number; month: number; days: DayEntry[] };
 
 const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -12,34 +23,70 @@ const ALL_DATA: MonthData[] = [
   {
     monthKey: "2026-04", label: "April 2026", year: 2026, month: 4,
     days: [
-      { day: 28, dayName: "Selasa",  project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:55", out: "17:05" }] },
-      { day: 27, dayName: "Senin",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:00", out: "17:00" }, { in: "18:00", out: "20:00", isLembur: true, lemburHours: 2 }] },
+      { day: 28, dayName: "Selasa",  project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:55", out: "17:05" }],
+        selfies: [{ time: "07:55", kind: "masuk" }] },
+      { day: 27, dayName: "Senin",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:00", out: "17:00" }, { in: "18:00", out: "20:00", isLembur: true, lemburHours: 2 }],
+        selfies: [{ time: "08:00", kind: "masuk" }, { time: "18:00", kind: "lembur" }] },
       { day: 26, dayName: "Minggu",  project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Tidak Hadir",   sessions: [] },
-      { day: 25, dayName: "Sabtu",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:10", out: "16:45" }] },
-      { day: 24, dayName: "Jumat",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:48", out: "17:10" }] },
-      { day: 23, dayName: "Kamis",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Setengah Hari", sessions: [{ in: "08:05", out: "12:00" }] },
-      { day: 22, dayName: "Rabu",    project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:50", out: "17:00" }] },
-      { day: 21, dayName: "Selasa",  project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:55", out: "17:05" }] },
+      { day: 25, dayName: "Sabtu",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:10", out: "16:45" }],
+        selfies: [{ time: "08:10", kind: "masuk" }] },
+      { day: 24, dayName: "Jumat",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:48", out: "17:10" }],
+        selfies: [{ time: "07:48", kind: "masuk" }] },
+      { day: 23, dayName: "Kamis",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Setengah Hari", sessions: [{ in: "08:05", out: "12:00" }],
+        selfies: [{ time: "08:05", kind: "masuk" }] },
+      { day: 22, dayName: "Rabu",    project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:50", out: "17:00" }],
+        selfies: [{ time: "07:50", kind: "masuk" }] },
+      { day: 21, dayName: "Selasa",  project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:55", out: "17:05" }],
+        selfies: [{ time: "07:55", kind: "masuk" }] },
       { day: 19, dayName: "Minggu",  project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Tidak Hadir",   sessions: [] },
-      { day: 18, dayName: "Sabtu",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:00", out: "16:55" }] },
-      { day: 17, dayName: "Jumat",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:45", out: "17:10" }] },
-      { day: 16, dayName: "Kamis",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:00", out: "17:00" }, { in: "18:00", out: "19:00", isLembur: true, lemburHours: 1 }] },
+      { day: 18, dayName: "Sabtu",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:00", out: "16:55" }],
+        selfies: [{ time: "08:00", kind: "masuk" }] },
+      { day: 17, dayName: "Jumat",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:45", out: "17:10" }],
+        selfies: [{ time: "07:45", kind: "masuk" }] },
+      { day: 16, dayName: "Kamis",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:00", out: "17:00" }, { in: "18:00", out: "19:00", isLembur: true, lemburHours: 1 }],
+        selfies: [{ time: "08:00", kind: "masuk" }, { time: "18:00", kind: "lembur" }] },
     ],
   },
   {
     monthKey: "2026-05", label: "Mei 2026", year: 2026, month: 5,
     days: [
-      { day: 24, dayName: "Senin",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:52", out: "17:10" }] },
-      { day: 23, dayName: "Sabtu",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "08:01", out: "16:55" }, { in: "18:00", out: "20:00", isLembur: true, lemburHours: 2 }] },
-      { day: 22, dayName: "Jumat",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:48", out: "17:05" }] },
-      { day: 21, dayName: "Kamis",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Setengah Hari", sessions: [{ in: "08:10", out: "12:30" }] },
-      { day: 20, dayName: "Rabu",    project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:55", out: "17:00" }, { in: "18:30", out: "21:30", isLembur: true, lemburHours: 3 }] },
+      { day: 24, dayName: "Senin",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",
+        sessions: [{ in: "07:52", out: "17:10" }],
+        selfies: [{ time: "07:52", kind: "masuk" }],
+        laporan: { note: "Pemasangan bekisting kolom lantai 2 selesai pada sisi barat. Pengecoran dijadwalkan besok pagi.", photos: 3 } },
+      { day: 23, dayName: "Sabtu",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",
+        sessions: [{ in: "08:01", out: "16:55" }, { in: "18:00", out: "20:00", isLembur: true, lemburHours: 2 }],
+        selfies: [{ time: "08:01", kind: "masuk" }, { time: "18:00", kind: "lembur" }] },
+      { day: 22, dayName: "Jumat",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",
+        sessions: [{ in: "07:48", out: "17:05" }],
+        selfies: [{ time: "07:48", kind: "masuk" }],
+        laporan: { note: "Pemasangan besi tulangan sloof sudah 80% di area blok C5. Material sisa sudah dipindahkan ke gudang.", photos: 2 } },
+      { day: 21, dayName: "Kamis",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Setengah Hari",
+        sessions: [{ in: "08:10", out: "12:30" }],
+        selfies: [{ time: "08:10", kind: "masuk" }] },
+      { day: 20, dayName: "Rabu",    project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",
+        sessions: [{ in: "07:55", out: "17:00" }, { in: "18:30", out: "21:30", isLembur: true, lemburHours: 3 }],
+        selfies: [{ time: "07:55", kind: "masuk" }, { time: "18:30", kind: "lembur" }],
+        laporan: { note: "Pengecoran pondasi titik D7–D9 berjalan lancar. Cuaca cerah, kondisi campuran beton sesuai spesifikasi.", photos: 3 } },
       { day: 19, dayName: "Selasa",  project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Tidak Hadir",   sessions: [] },
-      { day: 18, dayName: "Senin",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",         sessions: [{ in: "07:50", out: "17:10" }, { in: "18:00", out: "19:00", isLembur: true, lemburHours: 1 }] },
-      { day: 16, dayName: "Sabtu",   project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Hadir",         sessions: [{ in: "08:05", out: "17:00" }] },
-      { day: 15, dayName: "Jumat",   project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Hadir",         sessions: [{ in: "07:45", out: "16:50" }] },
-      { day: 14, dayName: "Kamis",   project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Hadir",         sessions: [{ in: "08:00", out: "17:20" }, { in: "18:00", out: "20:00", isLembur: true, lemburHours: 2 }] },
-      { day: 12, dayName: "Selasa",  project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Hadir",         sessions: [{ in: "07:55", out: "17:00" }] },
+      { day: 18, dayName: "Senin",   project: "Cemara Asri Blok C5", projCode: "KAS-2026-014", status: "Hadir",
+        sessions: [{ in: "07:50", out: "17:10" }, { in: "18:00", out: "19:00", isLembur: true, lemburHours: 1 }],
+        selfies: [{ time: "07:50", kind: "masuk" }, { time: "18:00", kind: "lembur" }],
+        laporan: { note: "Perapian galian tanah di sekitar pondasi selesai. Tim akan mulai pemasangan bekisting esok hari.", photos: 1 } },
+      { day: 16, dayName: "Sabtu",   project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Hadir",
+        sessions: [{ in: "08:05", out: "17:00" }],
+        selfies: [{ time: "08:05", kind: "masuk" }] },
+      { day: 15, dayName: "Jumat",   project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Hadir",
+        sessions: [{ in: "07:45", out: "16:50" }],
+        selfies: [{ time: "07:45", kind: "masuk" }],
+        laporan: { note: "Pemasangan rangka atap baja ringan di bagian tengah gedung sudah mencapai 60% progres.", photos: 2 } },
+      { day: 14, dayName: "Kamis",   project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Hadir",
+        sessions: [{ in: "08:00", out: "17:20" }, { in: "18:00", out: "20:00", isLembur: true, lemburHours: 2 }],
+        selfies: [{ time: "08:00", kind: "masuk" }, { time: "18:00", kind: "lembur" }] },
+      { day: 12, dayName: "Selasa",  project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Hadir",
+        sessions: [{ in: "07:55", out: "17:00" }],
+        selfies: [{ time: "07:55", kind: "masuk" }],
+        laporan: { note: "Pengecekan elevasi lantai kerja di zona A dan B telah dilakukan. Hasil sesuai gambar kerja.", photos: 1 } },
       { day: 11, dayName: "Senin",   project: "Jl. S. Parman",       projCode: "KAS-2026-013", status: "Tidak Hadir",   sessions: [] },
     ],
   },
@@ -188,24 +235,70 @@ export default function HistoryTab() {
                           </span>
                         </button>
 
-                        {/* Sessions */}
+                        {/* Expanded day content */}
                         {dayOpen && day.sessions.length > 0 && (
-                          <div className="pb-3 flex flex-col gap-1.5 pl-4 pr-4">
-                            {day.sessions.map((s, si) => (
-                              <div key={si} className="flex items-center gap-3">
-                                <div className="flex-shrink-0" style={{ width: 3, alignSelf: "stretch", minHeight: 20, background: s.isLembur ? "var(--kas-ochre)" : "var(--kas-cobalt)" }} />
-                                <div className="flex items-center gap-2 flex-1">
-                                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, letterSpacing: "0.04em", color: "var(--kas-ink-2)", fontWeight: 500 }}>{s.in}</span>
-                                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-4)" }}>→</span>
-                                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, letterSpacing: "0.04em", color: "var(--kas-ink-2)", fontWeight: 500 }}>{s.out}</span>
-                                  {s.isLembur && (
-                                    <span className="px-1.5 py-0.5" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 7, letterSpacing: "0.12em", textTransform: "uppercase", background: "var(--kas-ochre-soft)", color: "var(--kas-ochre-ink)", border: "1px solid var(--kas-ochre)" }}>
-                                      Lembur {s.lemburHours}j
-                                    </span>
-                                  )}
+                          <div>
+                            {/* Sessions */}
+                            <div className="pb-3 flex flex-col gap-1.5 pl-4 pr-4">
+                              {day.sessions.map((s, si) => (
+                                <div key={si} className="flex items-center gap-3">
+                                  <div className="flex-shrink-0" style={{ width: 3, alignSelf: "stretch", minHeight: 20, background: s.isLembur ? "var(--kas-ochre)" : "var(--kas-cobalt)" }} />
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, letterSpacing: "0.04em", color: "var(--kas-ink-2)", fontWeight: 500 }}>{s.in}</span>
+                                    <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-4)" }}>→</span>
+                                    <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, letterSpacing: "0.04em", color: "var(--kas-ink-2)", fontWeight: 500 }}>{s.out}</span>
+                                    {s.isLembur && (
+                                      <span className="px-1.5 py-0.5" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 7, letterSpacing: "0.12em", textTransform: "uppercase", background: "var(--kas-ochre-soft)", color: "var(--kas-ochre-ink)", border: "1px solid var(--kas-ochre)" }}>
+                                        Lembur {s.lemburHours}j
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
+                              ))}
+                            </div>
+
+                            {/* Selfie thumbnails */}
+                            {day.selfies && day.selfies.length > 0 && (
+                              <div style={{ display: "flex", paddingLeft: 16, paddingRight: 16, paddingBottom: 10, gap: 8 }}>
+                                {day.selfies.map((selfie, idx) => (
+                                  <div key={idx} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                                    <div
+                                      style={{
+                                        width: 52,
+                                        height: 52,
+                                        background: "var(--kas-ink)",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "#ffffff", letterSpacing: "0.04em" }}>
+                                        {selfie.time}
+                                      </span>
+                                    </div>
+                                    <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 7, color: "var(--kas-ink-3)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                                      {selfie.kind === "masuk" ? "MASUK" : "LEMBUR"}
+                                    </span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
+
+                            {/* Laporan harian */}
+                            {day.laporan && (
+                              <div style={{ margin: "0 16px 10px", padding: "10px 12px", background: "var(--kas-paper-2)", border: "1px solid var(--kas-line)" }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                                  <MonoLabel size={8}>LAPORAN HARIAN</MonoLabel>
+                                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "var(--kas-ink-3)", letterSpacing: "0.08em" }}>
+                                    {day.laporan.photos} foto
+                                  </span>
+                                </div>
+                                <p style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 13, color: "var(--kas-ink-2)", fontStyle: "italic", margin: 0, lineHeight: 1.5 }}>
+                                  {day.laporan.note}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

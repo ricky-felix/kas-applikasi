@@ -43,8 +43,13 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
   const [extra, setExtra]             = useState<Project[]>([]);
   const [showForm, setShowForm]       = useState(false);
   const [form, setForm]               = useState<NewProject>(EMPTY_FORM);
+  const [sebelumPhoto, setSebelumPhoto] = useState<string | null>(null);
   const [detailId, setDetailId]       = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  // Per-project sesudah photos and completion state
+  const [sesudahPhotos, setSesudahPhotos] = useState<Record<string, string>>({});
+  const [confirmComplete, setConfirmComplete] = useState<string | null>(null);
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
 
   const allProjects    = [...extra, ...PROJECTS];
   const detail         = allProjects.find((p) => p.id === detailId);
@@ -79,6 +84,7 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
     toast(`Proyek ${newProj.code} ditambahkan.`);
     setShowForm(false);
     setForm(EMPTY_FORM);
+    setSebelumPhoto(null);
   };
 
   // ── Detail view ─────────────────────────────────────────────────────────────
@@ -86,6 +92,8 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
     const st       = STATUS_MAP[detail.status];
     const sisa     = detail.contractValue - detail.paid;
     const assigned = WORKERS.filter((w) => detail.assigned.includes(w.id));
+    const isCompleted = detail.status === "Completed" || completedIds.has(detail.id);
+    const hasSesudah  = !!sesudahPhotos[detail.id];
     return (
       <div className="px-5 pt-4 pb-6">
         <button
@@ -153,6 +161,85 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Foto Sesudah + Tandai Selesai ──────────────────────────────── */}
+        {!isCompleted && (
+          <div className="mt-5">
+            <Kicker no="—" label="FOTO SESUDAH & PENYELESAIAN" />
+            <div className="mt-2 p-4" style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper-2)" }}>
+              <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", letterSpacing: "0.1em", marginBottom: 10 }}>
+                Upload foto kondisi akhir proyek sebelum menandai selesai.
+              </div>
+
+              {hasSesudah ? (
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="grid place-items-center" style={{ width: 52, height: 52, background: "var(--kas-moss-soft)", border: "1px solid var(--kas-moss)" }}>
+                    <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 7, color: "var(--kas-moss-ink)", letterSpacing: "0.1em", textTransform: "uppercase", textAlign: "center", lineHeight: 1.4 }}>Foto<br />Siap</span>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-moss-ink)", letterSpacing: "0.1em" }}>✓ Foto sesudah diunggah</div>
+                    <button type="button" onClick={() => setSesudahPhotos(p => { const n = {...p}; delete n[detail.id]; return n; })}
+                      style={{ border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "var(--kas-ink-4)", cursor: "pointer", padding: 0, marginTop: 2, letterSpacing: "0.1em" }}>
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-2 mb-3" style={{ border: "1px dashed var(--kas-line)", padding: "14px 0", cursor: "pointer" }}>
+                  <input type="file" accept="image/*" className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setSesudahPhotos(p => ({ ...p, [detail.id]: ev.target?.result as string }));
+                      reader.readAsDataURL(f);
+                      e.target.value = "";
+                    }} />
+                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>+ Upload Foto Sesudah</span>
+                </label>
+              )}
+
+              <button
+                type="button"
+                disabled={!hasSesudah}
+                onClick={() => setConfirmComplete(detail.id)}
+                style={{ width: "100%", border: "none", background: hasSesudah ? "var(--kas-moss)" : "var(--kas-line)", color: hasSesudah ? "var(--kas-ink)" : "var(--kas-ink-3)", padding: "12px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: hasSesudah ? "pointer" : "not-allowed" }}
+              >
+                Tandai Proyek Selesai
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isCompleted && (
+          <div className="mt-4 px-4 py-3" style={{ background: "var(--kas-moss-soft)", border: "1px solid var(--kas-moss)" }}>
+            <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-moss-ink)", letterSpacing: "0.14em", textTransform: "uppercase" }}>✓ Proyek selesai</div>
+          </div>
+        )}
+
+        {/* Confirm complete dialog */}
+        {confirmComplete === detail.id && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 px-5" style={{ background: "rgba(22,28,44,0.5)" }} onClick={() => setConfirmComplete(null)}>
+            <div className="w-full max-w-sm" style={{ background: "var(--kas-paper)", border: "2px solid var(--kas-moss)" }} onClick={e => e.stopPropagation()}>
+              <div className="px-6 pt-6 pb-3">
+                <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 22, fontWeight: 400, lineHeight: 1.2 }}>Tandai proyek selesai?</div>
+                <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", letterSpacing: "0.08em", marginTop: 8, lineHeight: 1.7 }}>
+                  {detail.name} akan ditandai selesai. Tindakan ini tidak bisa dibatalkan.
+                </div>
+              </div>
+              <div className="grid px-6 pb-6 pt-3 gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                <button type="button" onClick={() => setConfirmComplete(null)}
+                  style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", color: "var(--kas-ink-3)", padding: "12px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+                  Batal
+                </button>
+                <button type="button" onClick={() => { setCompletedIds(s => new Set([...s, detail.id])); setConfirmComplete(null); toast(`${detail.code} ditandai selesai.`); }}
+                  style={{ border: "none", background: "var(--kas-moss)", color: "var(--kas-ink)", padding: "12px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
+                  Ya, Selesai
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -325,8 +412,42 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
               </div>
             </div>
 
-            <div className="grid gap-2 mt-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
-              <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }} style={{ border: "1px solid var(--kas-ink)", background: "transparent", padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
+            {/* Foto Sebelum */}
+            <div className="mt-5">
+              <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 6 }}>
+                Foto Sebelum <span style={{ color: "var(--kas-ink-4)", fontWeight: 400 }}>(opsional)</span>
+              </div>
+              {sebelumPhoto ? (
+                <div className="flex items-center gap-3">
+                  <div className="grid place-items-center" style={{ width: 52, height: 52, background: "var(--kas-cobalt-soft)", border: "1px solid var(--kas-cobalt)" }}>
+                    <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 7, color: "var(--kas-cobalt-ink)", letterSpacing: "0.1em", textTransform: "uppercase", textAlign: "center", lineHeight: 1.4 }}>Foto<br />Siap</span>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-cobalt-ink)", letterSpacing: "0.1em" }}>✓ Foto sebelum diunggah</div>
+                    <button type="button" onClick={() => setSebelumPhoto(null)}
+                      style={{ border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "var(--kas-ink-4)", cursor: "pointer", padding: 0, marginTop: 2, letterSpacing: "0.1em" }}>
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-2" style={{ border: "1px dashed var(--kas-line)", padding: "12px 0", cursor: "pointer" }}>
+                  <input type="file" accept="image/*" className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setSebelumPhoto(ev.target?.result as string);
+                      reader.readAsDataURL(f);
+                      e.target.value = "";
+                    }} />
+                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>+ Upload Foto Sebelum</span>
+                </label>
+              )}
+            </div>
+
+            <div className="grid gap-2 mt-5" style={{ gridTemplateColumns: "1fr 1fr" }}>
+              <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); setSebelumPhoto(null); }} style={{ border: "1px solid var(--kas-ink)", background: "transparent", padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
               <button onClick={handleSubmit} disabled={!canSubmit} style={{ border: "none", background: canSubmit ? "var(--kas-ink)" : "var(--kas-line)", color: canSubmit ? "var(--kas-paper)" : "var(--kas-ink-3)", padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: canSubmit ? "pointer" : "default" }}>Buat Proyek</button>
             </div>
           </div>

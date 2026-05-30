@@ -2,17 +2,34 @@
 import { useState } from "react";
 import { MATERIAL_REQUESTS, PROJECTS } from "@/lib/data";
 import { Kicker, DisplayHeading } from "@/components/primitives";
+import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 
 export function MaterialRequestsTab({ toast }: { toast: (m: string) => void }) {
-  const [reqs, setReqs] = useState(MATERIAL_REQUESTS);
-  const approve = (id: string) => { setReqs((r) => r.map((x) => x.id === id ? { ...x, status: "Disetujui" as const } : x)); toast("Permintaan material disetujui."); };
-  const reject  = (id: string) => { setReqs((r) => r.map((x) => x.id === id ? { ...x, status: "Ditolak"   as const } : x)); toast("Permintaan material ditolak."); };
+  const [reqs, setReqs]               = useState(MATERIAL_REQUESTS);
+  const [confirmId, setConfirmId]     = useState<string | null>(null);
+  const [rejectConfirmId, setRejectConfirmId] = useState<string | null>(null);
+
+  const doApprove = (id: string) => { setReqs((r) => r.map((x) => x.id === id ? { ...x, status: "Disetujui" as const } : x)); toast("Permintaan material disetujui."); };
+  const doReject  = (id: string) => { setReqs((r) => r.map((x) => x.id === id ? { ...x, status: "Ditolak"   as const } : x)); toast("Permintaan material ditolak."); };
 
   const pending = reqs.filter((r) => r.status === "Pending");
   const done    = reqs.filter((r) => r.status !== "Pending");
 
   return (
     <>
+      {confirmId && (
+        <BossConfirmDialog
+          onConfirm={() => { doApprove(confirmId); setConfirmId(null); }}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
+      {rejectConfirmId && (
+        <BossConfirmDialog
+          message="Apakah bos sudah menyetujui penolakan permintaan ini?"
+          onConfirm={() => { doReject(rejectConfirmId); setRejectConfirmId(null); }}
+          onCancel={() => setRejectConfirmId(null)}
+        />
+      )}
       <Kicker no="A" label={`MATERIAL · ${pending.length} PENDING`} />
       <DisplayHeading size={26}>Material,<br /><em>menunggu persetujuan.</em></DisplayHeading>
 
@@ -33,8 +50,8 @@ export function MaterialRequestsTab({ toast }: { toast: (m: string) => void }) {
               </div>
               {req.note && <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 13, color: "var(--kas-ink-2)", fontStyle: "italic", marginBottom: 10 }}>{req.note}</div>}
               <div className="grid gap-1.5" style={{ gridTemplateColumns: "1fr 1fr" }}>
-                <button onClick={() => approve(req.id)} style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", padding: "10px 0", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>Setujui</button>
-                <button onClick={() => reject(req.id)}  style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", color: "var(--kas-ink-3)", padding: "10px 0", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>Tolak</button>
+                <button onClick={() => setConfirmId(req.id)} style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", padding: "10px 0", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>Setujui</button>
+                <button onClick={() => setRejectConfirmId(req.id)} style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", color: "var(--kas-ink-3)", padding: "10px 0", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}>Tolak</button>
               </div>
             </div>
           ))

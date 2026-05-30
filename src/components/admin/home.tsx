@@ -4,6 +4,8 @@ import {
 	WORKERS,
 	MATERIAL_REQUESTS,
 	CHANGE_ORDERS,
+	WORK_REPORTS,
+	PENDING_REGISTRATIONS,
 	TODAY,
 	fmtIDRshort,
 } from "@/lib/data";
@@ -23,11 +25,56 @@ export default function AMHome() {
 	const pendingCO = CHANGE_ORDERS.filter((c) => c.status === "Menunggu");
 	const totalPending = pendingMat.length + pendingCO.length;
 
-	// Workers grouped by active project
-	const projectAttendance = active.map((p) => ({
-		project: p,
-		workers: WORKERS.filter((w) => p.assigned.includes(w.id)),
-	}));
+	// Build unified activity feed
+	type FeedItem = { type: "hadir" | "laporan" | "material" | "daftar"; who: string; action: string; t: string; meta?: string; };
+	const feed: FeedItem[] = [
+		// Clock-ins from project activity logs
+		...PROJECTS.flatMap((p) =>
+			p.activity.map((a) => ({
+				type: "hadir" as const,
+				who: a.who,
+				action: a.action,
+				t: a.t,
+				meta: p.code,
+			}))
+		),
+		// Daily work reports
+		...WORK_REPORTS.map((r) => ({
+			type: "laporan" as const,
+			who: r.workerName,
+			action: `Kirim laporan${r.photos > 0 ? ` · ${r.photos} foto` : ""}`,
+			t: r.date,
+			meta: PROJECTS.find((p) => p.id === r.projectId)?.code,
+		})),
+		// Material requests (all, showing status)
+		...MATERIAL_REQUESTS.map((r) => ({
+			type: "material" as const,
+			who: r.workerName,
+			action: `Minta ${r.materialName} ${r.qty} ${r.unit} · ${r.status}`,
+			t: r.date,
+			meta: PROJECTS.find((p) => p.id === r.projectId)?.code,
+		})),
+		// New registrations
+		...PENDING_REGISTRATIONS.map((r) => ({
+			type: "daftar" as const,
+			who: r.name,
+			action: `Mendaftar sebagai ${r.jabatan}`,
+			t: r.submittedAt,
+		})),
+	];
+
+	const TYPE_DOT: Record<FeedItem["type"], string> = {
+		hadir:   "var(--kas-cobalt)",
+		laporan: "var(--kas-ink)",
+		material:"var(--kas-ochre)",
+		daftar:  "var(--kas-moss)",
+	};
+	const TYPE_LABEL: Record<FeedItem["type"], string> = {
+		hadir:   "Absensi",
+		laporan: "Laporan",
+		material:"Material",
+		daftar:  "Pendaftaran",
+	};
 
 	return (
 		<div className="px-5 pt-4 pb-8">
@@ -310,52 +357,39 @@ export default function AMHome() {
 				</div>
 			)}
 
-			{/* ── Attendance by project ────────────────────────────────────────── */}
+			{/* ── Activity feed ───────────────────────────────────────────────── */}
 			<div className="mt-6">
-				<Kicker no="C" label="ABSENSI HARI INI" />
+				<Kicker no="C" label={`${feed.length} AKTIVITAS HARI INI`} />
 				<div style={{ borderTop: "1px solid var(--kas-ink)" }}>
-					{projectAttendance.map(({ project, workers }) => (
+					{feed.map((item, i) => (
 						<div
-							key={project.id}
-							className="py-3"
+							key={i}
+							className="flex items-start gap-3 py-3"
 							style={{ borderBottom: "1px solid var(--kas-line-2)" }}
 						>
-							<div
-								style={{
-									fontFamily: "var(--font-jetbrains), monospace",
-									fontSize: 9,
-									color: "var(--kas-ink-3)",
-									letterSpacing: "0.12em",
-									textTransform: "uppercase",
-									marginBottom: 7,
-								}}
-							>
-								{project.address}
+							{/* Type dot */}
+							<div className="flex flex-col items-center gap-1 pt-1 flex-shrink-0" style={{ width: 20 }}>
+								<span style={{ display: "inline-block", width: 7, height: 7, background: TYPE_DOT[item.type] }} />
 							</div>
-							<div className="flex flex-wrap gap-1.5">
-								{workers.map((w) => (
-									<div
-										key={w.id}
-										className="flex items-center gap-2 px-2.5 py-2"
-										style={{
-											border: "1px solid var(--kas-line)",
-											background: "var(--kas-paper-2)",
-										}}
-									>
-										<span
-											className="inline-block flex-shrink-0"
-											style={{ width: 5, height: 5, background: "var(--kas-cobalt)" }}
-										/>
-										<div>
-											<div style={{ fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, lineHeight: 1.2 }}>
-												{w.name}
-											</div>
-											<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "var(--kas-ink-3)", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 1 }}>
-												{w.isKepalaProyek ? `${w.role} · Kepala Proyek` : w.role}
-											</div>
-										</div>
+
+							{/* Content */}
+							<div style={{ flex: 1, minWidth: 0 }}>
+								<div className="flex items-baseline justify-between gap-2">
+									<span style={{ fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>
+										{item.who}
+									</span>
+									<span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "var(--kas-ink-4)", letterSpacing: "0.1em", flexShrink: 0 }}>
+										{item.t}
+									</span>
+								</div>
+								<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", marginTop: 2, letterSpacing: "0.06em" }}>
+									{item.action}
+								</div>
+								{item.meta && (
+									<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, color: "var(--kas-ink-4)", marginTop: 2, letterSpacing: "0.1em" }}>
+										{TYPE_LABEL[item.type]} · {item.meta}
 									</div>
-								))}
+								)}
 							</div>
 						</div>
 					))}

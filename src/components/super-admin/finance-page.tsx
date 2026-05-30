@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo, useRef, useEffect } from "react";
-import { CASHFLOW_MAY, EXPENSES, PAYROLL_MAY, fmtIDR, fmtIDRshort, payrollTotal } from "@/lib/data";
+import { CASHFLOW_MAY, EXPENSES, PAYROLL_MAY, CASH_ADVANCES, DAILY_ALLOWANCES, WORKERS, fmtIDR, fmtIDRshort, payrollTotal } from "@/lib/data";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
@@ -76,10 +76,12 @@ export default function FinancePage() {
     [from, to],
   );
 
-  const totalIn       = filteredCashflow.filter((e) => e.type === "in").reduce((s, e) => s + e.amount, 0);
-  const totalOut      = filteredCashflow.filter((e) => e.type === "out").reduce((s, e) => s + e.amount, 0);
-  const totalPayroll  = PAYROLL_MAY.reduce((s, e) => s + payrollTotal(e), 0);
-  const totalExpenses = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+  const totalIn         = filteredCashflow.filter((e) => e.type === "in").reduce((s, e) => s + e.amount, 0);
+  const totalOut        = filteredCashflow.filter((e) => e.type === "out").reduce((s, e) => s + e.amount, 0);
+  const totalPayroll    = PAYROLL_MAY.reduce((s, e) => s + payrollTotal(e), 0);
+  const totalExpenses   = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+  const totalKasbon     = CASH_ADVANCES.reduce((s, ca) => s + ca.amount, 0);
+  const totalAllowances = DAILY_ALLOWANCES.reduce((s, da) => s + da.amount, 0);
 
   const rangeFilter = (
     <div className="flex" style={{ gap: 4, alignItems: "center" }}>
@@ -269,6 +271,60 @@ export default function FinancePage() {
             <tr style={{ borderTop: "1px solid var(--kas-ink)" }}>
               <td colSpan={5} style={{ padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Total Penggajian Mei</td>
               <td style={{ padding: "14px 0 14px 14px", textAlign: "right", fontFamily: "var(--font-newsreader), serif", fontSize: 22, color: "var(--kas-rust)" }}>{fmtIDR(totalPayroll)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      {/* Kasbon & Tunjangan Harian */}
+      <div className="mt-10">
+        <div style={{ borderTop: "1px solid var(--kas-ink)", paddingTop: 14, paddingBottom: 14 }}>
+          <div className="flex items-baseline justify-between">
+            <MonoLabel size={10}>Kasbon &amp; Tunjangan Harian Mei 2026</MonoLabel>
+            <div className="flex gap-6">
+              <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-rust)", letterSpacing: "0.08em" }}>
+                Kasbon: −{fmtIDR(totalKasbon)}
+              </span>
+              <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-moss)", letterSpacing: "0.08em" }}>
+                Tunjangan: +{fmtIDR(totalAllowances)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", borderBottom: "1px solid var(--kas-ink)" }}>
+              <th style={{ textAlign: "left", padding: "10px 0" }}>Pekerja</th>
+              <th style={{ textAlign: "right", padding: "10px 14px" }}>Kasbon</th>
+              <th style={{ textAlign: "right", padding: "10px 0 10px 14px" }}>Tunjangan Harian</th>
+            </tr>
+          </thead>
+          <tbody>
+            {WORKERS.map((w) => {
+              const kasbon     = CASH_ADVANCES.filter((ca) => ca.workerId === w.id).reduce((s, ca) => s + ca.amount, 0);
+              const allowances = DAILY_ALLOWANCES.filter((da) => da.workerId === w.id).reduce((s, da) => s + da.amount, 0);
+              if (kasbon === 0 && allowances === 0) return null;
+              return (
+                <tr key={w.id} style={{ borderBottom: "1px solid var(--kas-line)" }}>
+                  <td style={{ padding: "12px 14px 12px 0" }}>
+                    <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 15 }}>{w.name}</div>
+                    <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", marginTop: 2, letterSpacing: "0.08em" }}>{w.role}</div>
+                  </td>
+                  <td style={{ padding: "12px 14px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: kasbon > 0 ? "var(--kas-rust)" : "var(--kas-ink-4)" }}>
+                    {kasbon > 0 ? `−${fmtIDR(kasbon)}` : "—"}
+                  </td>
+                  <td style={{ padding: "12px 0 12px 14px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: allowances > 0 ? "var(--kas-moss)" : "var(--kas-ink-4)" }}>
+                    {allowances > 0 ? `+${fmtIDR(allowances)}` : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr style={{ borderTop: "1px solid var(--kas-ink)" }}>
+              <td style={{ padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Total</td>
+              <td style={{ padding: "14px 14px", textAlign: "right", fontFamily: "var(--font-newsreader), serif", fontSize: 22, color: "var(--kas-rust)" }}>−{fmtIDR(totalKasbon)}</td>
+              <td style={{ padding: "14px 0 14px 14px", textAlign: "right", fontFamily: "var(--font-newsreader), serif", fontSize: 22, color: "var(--kas-moss)" }}>+{fmtIDR(totalAllowances)}</td>
             </tr>
           </tfoot>
         </table>

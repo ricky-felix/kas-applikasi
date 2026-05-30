@@ -7,6 +7,8 @@ import {
 	CASHFLOW_MAY,
 	MATERIAL_REQUESTS,
 	CHANGE_ORDERS,
+	PENDING_REGISTRATIONS,
+	WORK_REPORTS,
 	TODAY_SHORT,
 	fmtIDRshort,
 	type Account,
@@ -24,15 +26,10 @@ import { BayarSheet } from "@/components/owner/sheets/bayar-sheet";
 import { PekerjaSheet } from "@/components/owner/sheets/pekerja-sheet";
 import { MaterialSheet } from "@/components/owner/sheets/material-sheet";
 import { PermintaanSheet } from "@/components/owner/sheets/permintaan-sheet";
+import { PendaftaranSheet } from "@/components/owner/sheets/pendaftaran-sheet";
+import { LaporanSheet } from "@/components/owner/sheets/laporan-sheet";
 
-type Sheet =
-	| "proyek"
-	| "bayar"
-	| "pekerja"
-	| "material"
-	| "finance"
-	| "permintaan"
-	| null;
+type Sheet = "proyek" | "bayar" | "pekerja" | "material" | "finance" | "laporan" | null;
 
 export default function OwnerDashboard({
 	session,
@@ -57,6 +54,9 @@ export default function OwnerDashboard({
 	).length;
 	const pendingCO = CHANGE_ORDERS.filter((c) => c.status === "Menunggu").length;
 	const totalPending = pendingMR + pendingCO;
+	const pendingReg = PENDING_REGISTRATIONS.filter(
+		(r) => r.status === "Pending",
+	).length;
 
 	const cards = [
 		{
@@ -105,12 +105,12 @@ export default function OwnerDashboard({
 			accent: false,
 		},
 		{
-			key: "permintaan",
+			key: "laporan",
 			no: "06",
-			label: "Permintaan pending",
-			value: String(totalPending).padStart(2, "0"),
-			sub: `${pendingMR} material · ${pendingCO} Ubah Order`,
-			accent: totalPending > 0,
+			label: "Laporan harian",
+			value: String(WORK_REPORTS.length).padStart(2, "0"),
+			sub: `${WORK_REPORTS.reduce((s, r) => s + r.photos, 0)} foto dilampirkan`,
+			accent: false,
 		},
 	] as const;
 
@@ -248,11 +248,11 @@ export default function OwnerDashboard({
 										<em>bulan ini.</em>
 									</>
 								)}
-								{sheet === "permintaan" && (
+								{sheet === "laporan" && (
 									<>
-										Permintaan,
+										Laporan,
 										<br />
-										<em>menunggu.</em>
+										<em>dari lapangan.</em>
 									</>
 								)}
 							</DisplayHeading>
@@ -266,16 +266,8 @@ export default function OwnerDashboard({
 								/>
 							)}
 							{sheet === "material" && <MaterialSheet materials={MATERIALS} />}
-							{sheet === "permintaan" && (
-								<PermintaanSheet
-									materialRequests={MATERIAL_REQUESTS}
-									changeOrders={CHANGE_ORDERS}
-									projects={PROJECTS}
-									pendingMR={pendingMR}
-									pendingCO={pendingCO}
-								/>
-							)}
 							{sheet === "finance" && <OwnerFinanceSheet />}
+							{sheet === "laporan" && <LaporanSheet />}
 						</div>
 					</div>
 				</>

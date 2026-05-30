@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { PROJECTS, PROOF_SUBMISSIONS, fmtIDR, fmtIDRshort, type ProofSubmission } from "@/lib/data";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
+import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 
 function WAIcon() {
   return <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4A14 14 0 003.5 22l-1.5 6 6.2-1.6A14 14 0 1020 4z" /></svg>;
@@ -25,21 +26,25 @@ export function TagihanTab({ toast }: { toast: (m: string) => void }) {
   const outstanding = PROJECTS.filter((p) => p.contractValue > p.paid);
   const total = outstanding.reduce((s, p) => s + (p.contractValue - p.paid), 0);
 
-  const [approved, setApproved] = useState<Set<string>>(new Set());
-  const [proofs, setProofs]     = useState<ProofSubmission[]>(PROOF_SUBMISSIONS);
+  const [approved, setApproved]   = useState<Set<string>>(new Set());
+  const [proofs, setProofs]       = useState<ProofSubmission[]>(PROOF_SUBMISSIONS);
   const [openProofId, setOpenProofId] = useState<string | null>(null);
+  const [confirmStage, setConfirmStage] = useState<{ pid: string; idx: number } | null>(null);
+  const [confirmProof, setConfirmProof] = useState<ProofSubmission | null>(null);
 
-  const approve = (pid: string, idx: number) => {
+  const doApproveStage = (pid: string, idx: number) => {
     setApproved((prev) => { const n = new Set(prev); n.add(`${pid}-${idx}`); return n; });
     toast(`${STAGE_LABELS[idx]} ditandai lunas.`);
   };
 
-  const approveProof = (ps: ProofSubmission) => {
+  const doApproveProof = (ps: ProofSubmission) => {
     setApproved((prev) => { const n = new Set(prev); n.add(`${ps.projectId}-${ps.stageIdx}`); return n; });
     setProofs((prev) => prev.filter((p) => p.id !== ps.id));
     setOpenProofId(null);
     toast(`${ps.stageLabel} disetujui.`);
   };
+
+  const approveProof = (ps: ProofSubmission) => setConfirmProof(ps);
 
   const rejectProof = (ps: ProofSubmission) => {
     setProofs((prev) => prev.filter((p) => p.id !== ps.id));
@@ -49,6 +54,18 @@ export function TagihanTab({ toast }: { toast: (m: string) => void }) {
 
   return (
     <>
+      {confirmStage && (
+        <BossConfirmDialog
+          onConfirm={() => { doApproveStage(confirmStage.pid, confirmStage.idx); setConfirmStage(null); }}
+          onCancel={() => setConfirmStage(null)}
+        />
+      )}
+      {confirmProof && (
+        <BossConfirmDialog
+          onConfirm={() => { doApproveProof(confirmProof); setConfirmProof(null); }}
+          onCancel={() => setConfirmProof(null)}
+        />
+      )}
       <Kicker no="A" label={`${outstanding.length} BELUM LUNAS`} />
       <DisplayHeading size={26}>Tagihan,<br /><em>aktif.</em></DisplayHeading>
 
@@ -154,7 +171,7 @@ export function TagihanTab({ toast }: { toast: (m: string) => void }) {
                         <button
                           type="button"
                           disabled={!prevApproved}
-                          onClick={() => approve(p.id, idx)}
+                          onClick={() => setConfirmStage({ pid: p.id, idx })}
                           style={{
                             border: "1px solid var(--kas-ink)",
                             background: prevApproved ? "var(--kas-ink)" : "transparent",

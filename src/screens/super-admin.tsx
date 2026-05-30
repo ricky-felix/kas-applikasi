@@ -15,6 +15,7 @@ import AnalyticsPage from "@/components/super-admin/analytics-page";
 import LaporanPage from "@/components/super-admin/laporan-page";
 import MaterialRequestsPage from "@/components/super-admin/material-requests-page";
 import ChangeOrdersPage from "@/components/super-admin/change-orders-page";
+import ContactsPage from "@/components/super-admin/contacts-page";
 
 type Page =
 	| "dashboard"
@@ -29,7 +30,8 @@ type Page =
 	| "laporan"
 	| "permintaan-material"
 	| "change-order"
-	| "analytics";
+	| "analytics"
+	| "contacts";
 
 function Sidebar({
 	view,
@@ -72,6 +74,7 @@ function Sidebar({
 			label: "Administrasi",
 			items: [
 				{ k: "users", label: "Pengguna" },
+				{ k: "contacts", label: "Direktori Kontak" },
 				{ k: "analytics", label: "Analitik" },
 			],
 		},
@@ -307,6 +310,32 @@ export default function SuperAdmin({
 				color: "var(--kas-ink)",
 			}}
 		>
+			{/* Phone viewport warning — only visible on small screens */}
+			<div
+				className="fixed inset-0 z-[999] flex-col items-center justify-center px-8 text-center"
+				style={{ background: "var(--kas-paper)", display: "none" }}
+				// Tailwind's `sm:hidden` equivalent via a style tag is not reliable here;
+				// we use a <style> block instead so it survives CSS-in-JS
+			/>
+			<style>{`
+				@media (max-width: 767px) {
+					.sa-phone-wall { display: flex !important; }
+					.sa-main-content { display: none !important; }
+				}
+			`}</style>
+			<div className="sa-phone-wall fixed inset-0 z-[999] flex-col items-center justify-center px-8 text-center" style={{ background: "var(--kas-paper)", display: "none" }}>
+				<div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 48, lineHeight: 1, marginBottom: 16 }}>⊘</div>
+				<div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em", marginBottom: 12 }}>
+					Layar terlalu kecil.
+				</div>
+				<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--kas-ink-3)", letterSpacing: "0.1em", lineHeight: 1.8, maxWidth: 280 }}>
+					Halaman Super Admin hanya dapat diakses melalui tablet atau desktop. Buka kembali di layar yang lebih besar.
+				</div>
+				<div className="mt-8 px-5 py-2.5" style={{ border: "1px solid var(--kas-line)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--kas-ink-4)" }}>
+					Min. 768px
+				</div>
+			</div>
+			<div className="sa-main-content h-full grid overflow-hidden" style={{ gridTemplateColumns: "220px 1fr", gridColumn: "1 / -1" }}>
 			<Sidebar
 				view={view}
 				setView={setView}
@@ -342,8 +371,10 @@ export default function SuperAdmin({
 				{view.page === "permintaan-material" && <MaterialRequestsPage />}
 				{view.page === "change-order" && <ChangeOrdersPage />}
 				{view.page === "users" && <UsersPage />}
+				{view.page === "contacts" && <ContactsPage />}
 				{view.page === "analytics" && <AnalyticsPage />}
 			</main>
+			</div>
 		</div>
 	);
 }

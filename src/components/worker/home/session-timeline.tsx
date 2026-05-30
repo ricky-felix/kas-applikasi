@@ -19,13 +19,12 @@ type TimelineEntry = { kind: "session"; s: Session; idx: number };
 export function SessionTimeline({
   sessions,
   activeSession,
-  totalLemburMin,
 }: {
   sessions: Session[];
   activeSession: Session | undefined;
-  totalLemburMin: number;
 }) {
-  const totalWorkMin = sessions.reduce((s, x) => s + sessionMinutes(x.in, x.out), 0);
+  const totalWorkMin   = sessions.reduce((s, x) => s + sessionMinutes(x.in, x.out), 0);
+  const totalLemburMin = sessions.reduce((s, x) => s + (x.lemburJam ? x.lemburJam * 60 : 0), 0);
 
   const closedSessions = sessions.filter((s) => s.out !== null).sort((a, b) => toMin(a.in) - toMin(b.in));
   const timeline: TimelineEntry[] = closedSessions.map((s, idx) => ({ kind: "session", s, idx }));

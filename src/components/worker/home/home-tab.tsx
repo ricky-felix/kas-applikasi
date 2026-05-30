@@ -5,7 +5,6 @@ import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 import { ProjectSelector } from "./project-selector";
 import { ClockSection } from "./clock-section";
 import { SessionTimeline } from "./session-timeline";
-import { LemburSection, type LemburSession } from "./lembur-section";
 import { ConfirmDialog } from "./confirm-dialog";
 
 type Session = { id: number; projectId: string; in: string; out: string | null; lemburJam?: number; lemburEndsAt?: number };
@@ -31,36 +30,16 @@ export default function HomeTab({
   activeSession: Session | undefined;
   toast: (m: string) => void;
 }) {
-  const [lemburSessions, setLemburSessions] = useState<LemburSession[]>([]);
   const [absencePickerFor, setAbsencePickerFor] = useState<string | null>(null);
   const [customReason, setCustomReason] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const [lemburExpanded, setLemburExpanded] = useState(false);
-  const [showLemburConfirm, setShowLemburConfirm] = useState(false);
   const [showAbsenceConfirm, setShowAbsenceConfirm] = useState(false);
 
   const selectedProj            = myProjects.find((p) => p.id === state.selectedProjectId) || myProjects[0];
   const absentEntry             = state.absentProjects.find((a) => a.id === selectedProj?.id);
   const isAbsent                = !!absentEntry;
   const hasAnySession           = state.sessions.length > 0;
-  const allSessionsClosed       = hasAnySession && !activeSession;
   const selectedProjHasSessions = state.sessions.some((s) => s.projectId === selectedProj?.id);
-  const lemburActive            = lemburSessions.find((s) => s.out === null);
-  const totalLemburMin          = lemburSessions.reduce((s, x) => {
-    if (!x.out) return s;
-    const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-    return s + Math.max(0, toMin(x.out) - toMin(x.in));
-  }, 0);
-
-  const startLembur = (projectId: string, note: string, hours: number) => {
-    const endsAt = Date.now() + hours * 3600 * 1000;
-    setLemburSessions((ls) => [...ls, { id: Date.now(), projectId, note, hours, endsAt, in: nowTime(), out: null }]);
-    toast(`Lembur ${hours}j dimulai.`);
-  };
-  const stopLembur = () => {
-    setLemburSessions((ls) => ls.map((x) => x.out === null ? { ...x, out: nowTime() } : x));
-    toast("Sesi lembur selesai.");
-  };
 
   const handleSelectReason = (reason: string) => {
     if (!absencePickerFor) return;
@@ -98,6 +77,7 @@ export default function HomeTab({
         activeSession={activeSession}
         isAbsent={isAbsent}
         absentReason={absentEntry?.reason}
+        workerName={me.name}
         onClockIn={() => clockIn(selectedProj!.id)}
         onClockOut={clockOut}
         onClockInLembur={(hours) => { clockIn(selectedProj!.id, hours); }}
@@ -178,38 +158,12 @@ export default function HomeTab({
         </div>
       )}
 
-      {hasAnySession && <SessionTimeline sessions={state.sessions} activeSession={activeSession} totalLemburMin={totalLemburMin} />}
-
-      {allSessionsClosed && !lemburExpanded && !lemburActive && lemburSessions.length === 0 && (
-        <div className="mt-5">
-          <button
-            type="button"
-            onClick={() => setShowLemburConfirm(true)}
-            className="w-full"
-            style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "16px 0", cursor: "pointer" }}
-          >
-            + Tambah Lembur
-          </button>
-        </div>
-      )}
-
-      {allSessionsClosed && (lemburExpanded || lemburActive || lemburSessions.length > 0) && (
-        <LemburSection
-          projects={myProjects}
-          lemburSessions={lemburSessions}
-          lemburActive={lemburActive}
-          onStart={startLembur}
-          onStop={stopLembur}
-          toast={toast}
-        />
-      )}
-
-
+      {hasAnySession && <SessionTimeline sessions={state.sessions} activeSession={activeSession} />}
 
       {(hasAnySession || state.absentProjects.length > 0) && (
         <button
           type="button"
-          onClick={() => { setState(() => ({ sessions: [], absentProjects: [], selectedProjectId: myProjects[0]?.id || "", photos: 0, overtime: 0 })); setLemburSessions([]); setAbsencePickerFor(null); }}
+          onClick={() => { setState(() => ({ sessions: [], absentProjects: [], selectedProjectId: myProjects[0]?.id || "", photos: 0, overtime: 0 })); setAbsencePickerFor(null); }}
           className="mt-4 w-full"
           style={{ border: "none", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.18em", padding: "8px 0", textTransform: "uppercase", cursor: "pointer" }}
         >
@@ -228,16 +182,6 @@ export default function HomeTab({
         />
       )}
 
-      {showLemburConfirm && (
-        <ConfirmDialog
-          message="Apakah lembur sudah diizinkan oleh bos?"
-          sub="Lembur hanya boleh dicatat jika sudah mendapat konfirmasi dari mandor atau pemilik proyek."
-          confirmLabel="Ya, sudah dikonfirmasi"
-          cancelLabel="Belum"
-          onConfirm={() => { setShowLemburConfirm(false); setLemburExpanded(true); }}
-          onCancel={() => setShowLemburConfirm(false)}
-        />
-      )}
     </div>
   );
 }

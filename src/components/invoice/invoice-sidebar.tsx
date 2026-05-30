@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 import { fmtIDR } from "@/lib/data";
 import type { Project } from "@/lib/data";
 import { PaymentProofUpload } from "./payment-proof-upload";
@@ -20,6 +22,14 @@ function buildWaUrl(project: Project, outstanding: number): string {
 
 export function InvoiceSidebar({ project, totalPaid, outstanding }: { project: Project; totalPaid: number; outstanding: number }) {
   const waUrl = buildWaUrl(project, outstanding);
+  const [copied, setCopied] = useState(false);
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <div className="sticky top-0 self-start h-screen overflow-y-auto border-l flex flex-col" style={{ background: "var(--kas-paper-2)", borderColor: "var(--kas-line)" }}>
@@ -67,6 +77,14 @@ export function InvoiceSidebar({ project, totalPaid, outstanding }: { project: P
 
       {/* CTA */}
       <div style={{ padding: "20px 28px" }}>
+        <button
+          type="button"
+          onClick={copyLink}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", marginBottom: 8, padding: "11px 20px", background: "transparent", border: "1px solid var(--kas-line)", color: copied ? "var(--kas-moss-ink)" : "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", cursor: "pointer" }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
+          {copied ? "Tersalin!" : "Salin link tagihan"}
+        </button>
         {outstanding > 0 ? (
           <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "14px 20px", background: "var(--kas-ink)", color: "var(--kas-paper)", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", textDecoration: "none" }}>
             <WAIcon />

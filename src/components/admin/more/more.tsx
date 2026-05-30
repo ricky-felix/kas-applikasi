@@ -1,10 +1,18 @@
 "use client";
 import { useState } from "react";
-import { WORKERS } from "@/lib/data";
+import { WORKERS, PROJECTS, PENDING_REGISTRATIONS } from "@/lib/data";
+import { WORKER_JABATAN } from "@/components/login/types";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 import AMWorkerManagement from "./worker-management";
+import AMApprovals from "./approvals";
+import AMContacts from "./contacts";
 
-type SubView = "workers";
+const activeClientsCount  = PROJECTS.filter((p) => p.status === "Active").length;
+const workerPendingCount  = PENDING_REGISTRATIONS.filter(
+  (r) => r.status === "Pending" && WORKER_JABATAN.includes(r.jabatan)
+).length;
+
+type SubView = "workers" | "approvals" | "contacts";
 
 function MenuItem({ n, label, sub, onClick }: { n: string; label: string; sub: string; onClick: () => void }) {
   return (
@@ -30,7 +38,9 @@ export default function AMMore({ session, toast, onLogout }: { session: { name: 
   const [subView, setSubView] = useState<SubView | null>(null);
   const back = () => setSubView(null);
 
-  if (subView === "workers") return <AMWorkerManagement onBack={back} toast={toast} />;
+  if (subView === "workers")   return <AMWorkerManagement onBack={back} toast={toast} />;
+  if (subView === "approvals") return <AMApprovals onBack={back} toast={toast} />;
+  if (subView === "contacts")  return <AMContacts onBack={back} />;
 
   return (
     <div className="px-5 pt-4 pb-6">
@@ -55,6 +65,23 @@ export default function AMMore({ session, toast, onLogout }: { session: { name: 
         <div>
           <Kicker no="A" label="MANAJEMEN TIM" />
           <MenuItem n="01" label="Manajemen Pekerja" sub={`${WORKERS.length} pekerja terdaftar`} onClick={() => setSubView("workers")} />
+        </div>
+
+        {/* B · Pendaftaran */}
+        <div>
+          <Kicker no="B" label="PENDAFTARAN PEKERJA" />
+          <MenuItem
+            n="02"
+            label="Persetujuan Pekerja"
+            sub={workerPendingCount > 0 ? `${workerPendingCount} menunggu persetujuan` : "Tidak ada yang menunggu"}
+            onClick={() => setSubView("approvals")}
+          />
+        </div>
+
+        {/* C · Direktori */}
+        <div>
+          <Kicker no="C" label="DIREKTORI" />
+          <MenuItem n="03" label="Direktori Kontak" sub={`Pekerja & ${activeClientsCount} klien aktif`} onClick={() => setSubView("contacts")} />
         </div>
       </div>
 

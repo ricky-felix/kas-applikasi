@@ -5,6 +5,8 @@ import {
 	PAYROLL_MAY,
 	WORK_REPORTS,
 	MATERIAL_REQUESTS,
+	CASH_ADVANCES,
+	DAILY_ALLOWANCES,
 	fmtIDR,
 	fmtIDRshort,
 	payrollTotal,
@@ -77,6 +79,13 @@ export default function TeamPage() {
 				}))
 			: [];
 
+		const kasbon = CASH_ADVANCES
+			.filter((ca) => ca.workerId === w.id)
+			.reduce((s, ca) => s + ca.amount, 0);
+		const allowances = DAILY_ALLOWANCES
+			.filter((da) => da.workerId === w.id)
+			.reduce((s, da) => s + da.amount, 0);
+
 		return {
 			...w,
 			assignedProjects,
@@ -86,6 +95,8 @@ export default function TeamPage() {
 			revCredit,
 			revPerDay,
 			daysPerProject,
+			kasbon,
+			allowances,
 		};
 	});
 
@@ -457,7 +468,7 @@ export default function TeamPage() {
 								)}
 							</div>
 
-							{/* Wages + payment status */}
+							{/* Wages + kasbon + payment status */}
 							<div style={{ textAlign: "right" }}>
 								{w.wages > 0 ? (
 									<>
@@ -467,7 +478,23 @@ export default function TeamPage() {
 										<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", marginTop: 3, letterSpacing: "0.08em" }}>
 											{fmtIDR(w.rate)}/hari
 										</div>
+										{w.kasbon > 0 && (
+											<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-rust)", marginTop: 3, letterSpacing: "0.08em" }}>
+												−{fmtIDRshort(w.kasbon)} kasbon
+											</div>
+										)}
+										{w.allowances > 0 && (
+											<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-moss)", marginTop: 2, letterSpacing: "0.08em" }}>
+												+{fmtIDRshort(w.allowances)} tunjangan
+											</div>
+										)}
+										{(w.kasbon > 0 || w.allowances > 0) && (
+											<div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink)", marginTop: 4, letterSpacing: "0.08em", fontWeight: 600, borderTop: "1px solid var(--kas-line)", paddingTop: 4 }}>
+												= {fmtIDRshort(w.wages - w.kasbon + w.allowances)}
+											</div>
+										)}
 										<select
+											title="Status gaji"
 											value={wageStatus[w.id] ?? "pending"}
 											onChange={(e) => setWageStatus((prev) => ({ ...prev, [w.id]: e.target.value as "pending" | "lunas" }))}
 											style={{

@@ -2,16 +2,20 @@
 import { useState } from "react";
 import { CHANGE_ORDERS, PROJECTS } from "@/lib/data";
 import { Kicker, DisplayHeading } from "@/components/primitives";
+import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 
 export function ChangeOrderTab({ toast }: { toast: (m: string) => void }) {
-	const [cos, setCos] = useState(CHANGE_ORDERS);
-	const approve = (id: string) => {
+	const [cos, setCos]                         = useState(CHANGE_ORDERS);
+	const [confirmId, setConfirmId]             = useState<string | null>(null);
+	const [rejectConfirmId, setRejectConfirmId] = useState<string | null>(null);
+
+	const doApprove = (id: string) => {
 		setCos((r) =>
 			r.map((x) => (x.id === id ? { ...x, status: "Disetujui" as const } : x)),
 		);
 		toast("Ubah Order disetujui.");
 	};
-	const reject = (id: string) => {
+	const doReject = (id: string) => {
 		setCos((r) =>
 			r.map((x) => (x.id === id ? { ...x, status: "Ditolak" as const } : x)),
 		);
@@ -23,6 +27,19 @@ export function ChangeOrderTab({ toast }: { toast: (m: string) => void }) {
 
 	return (
 		<>
+			{confirmId && (
+				<BossConfirmDialog
+					onConfirm={() => { doApprove(confirmId); setConfirmId(null); }}
+					onCancel={() => setConfirmId(null)}
+				/>
+			)}
+			{rejectConfirmId && (
+				<BossConfirmDialog
+					message="Apakah bos sudah menyetujui penolakan ubah order ini?"
+					onConfirm={() => { doReject(rejectConfirmId); setRejectConfirmId(null); }}
+					onCancel={() => setRejectConfirmId(null)}
+				/>
+			)}
 			<Kicker no="B" label={`Ubah Order · ${pending.length} PENDING`} />
 			<DisplayHeading size={26}>
 				Ubah Order,
@@ -96,7 +113,7 @@ export function ChangeOrderTab({ toast }: { toast: (m: string) => void }) {
 								style={{ gridTemplateColumns: "1fr 1fr" }}
 							>
 								<button
-									onClick={() => approve(co.id)}
+									onClick={() => setConfirmId(co.id)}
 									style={{
 										border: "none",
 										background: "var(--kas-ink)",
@@ -112,7 +129,7 @@ export function ChangeOrderTab({ toast }: { toast: (m: string) => void }) {
 									Setujui
 								</button>
 								<button
-									onClick={() => reject(co.id)}
+									onClick={() => setRejectConfirmId(co.id)}
 									style={{
 										border: "1px solid var(--kas-line)",
 										background: "var(--kas-paper)",

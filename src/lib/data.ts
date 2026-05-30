@@ -266,6 +266,22 @@ export type PayrollEntry = {
   projects: { projectId: string; code: string; daysPresent: number; daysHalf: number }[];
 };
 
+export type CashAdvance = {
+  id: string;
+  workerId: string;
+  date: string;
+  amount: number;
+  note: string;
+};
+
+export type DailyAllowance = {
+  id: string;
+  workerId: string;
+  date: string;
+  type: "makan" | "bensin" | "lain-lain";
+  amount: number;
+};
+
 export type CashFlowEntry = {
   date: string; type: "in" | "out";
   projectCode: string; description: string; amount: number;
@@ -345,6 +361,34 @@ export const CASHFLOW_MAY: CashFlowEntry[] = [
   { date: _rd(0),  type: "out", projectCode: "PENGGAJIAN",   description: "Upah bulan ini (parsial) – 7 pekerja",      amount: 28570000 },
 ];
 
+export const CASH_ADVANCES: CashAdvance[] = [
+  { id: "ca1", workerId: "w1", date: _rd(18), amount: 300000, note: "Kebutuhan mendesak" },
+  { id: "ca2", workerId: "w1", date: _rd(8),  amount: 200000, note: "Kasbon tambahan" },
+  { id: "ca3", workerId: "w2", date: _rd(15), amount: 150000, note: "Keperluan keluarga" },
+  { id: "ca4", workerId: "w4", date: _rd(20), amount: 400000, note: "Biaya berobat" },
+  { id: "ca5", workerId: "w4", date: _rd(7),  amount: 200000, note: "Kasbon" },
+  { id: "ca6", workerId: "w7", date: _rd(12), amount: 500000, note: "Kebutuhan mendadak" },
+];
+
+export const DAILY_ALLOWANCES: DailyAllowance[] = [
+  { id: "da1",  workerId: "w1", date: _rd(20), type: "makan",  amount: 25000 },
+  { id: "da2",  workerId: "w1", date: _rd(20), type: "bensin", amount: 20000 },
+  { id: "da3",  workerId: "w1", date: _rd(19), type: "makan",  amount: 25000 },
+  { id: "da4",  workerId: "w1", date: _rd(19), type: "bensin", amount: 20000 },
+  { id: "da5",  workerId: "w2", date: _rd(20), type: "makan",  amount: 25000 },
+  { id: "da6",  workerId: "w2", date: _rd(19), type: "makan",  amount: 25000 },
+  { id: "da7",  workerId: "w3", date: _rd(20), type: "makan",  amount: 25000 },
+  { id: "da8",  workerId: "w4", date: _rd(20), type: "makan",  amount: 25000 },
+  { id: "da9",  workerId: "w4", date: _rd(20), type: "bensin", amount: 20000 },
+  { id: "da10", workerId: "w4", date: _rd(19), type: "makan",  amount: 25000 },
+  { id: "da11", workerId: "w5", date: _rd(20), type: "makan",  amount: 25000 },
+  { id: "da12", workerId: "w6", date: _rd(20), type: "makan",  amount: 25000 },
+  { id: "da13", workerId: "w7", date: _rd(20), type: "makan",  amount: 25000 },
+  { id: "da14", workerId: "w7", date: _rd(20), type: "bensin", amount: 30000 },
+  { id: "da15", workerId: "w7", date: _rd(19), type: "makan",  amount: 25000 },
+  { id: "da16", workerId: "w7", date: _rd(19), type: "bensin", amount: 30000 },
+];
+
 export function payrollTotal(entry: PayrollEntry): number {
   return entry.projects.reduce((s, p) => s + (p.daysPresent + p.daysHalf * 0.5) * entry.rate, 0);
 }
@@ -410,6 +454,22 @@ export const PROOF_SUBMISSIONS: ProofSubmission[] = [
     fileName: "bukti-bca-cambridge-t1.pdf", fileType: "pdf",
     submittedAt: _rd(0) + ", 11:32",
   },
+];
+
+export type PendingRegistration = {
+  id: string;
+  phone: string;
+  name: string;
+  gender: "L" | "P";
+  jabatan: string;
+  photo: string | null;
+  submittedAt: string;
+  status: "Pending" | "Disetujui" | "Ditolak";
+};
+
+export const PENDING_REGISTRATIONS: PendingRegistration[] = [
+  { id: "pr1", phone: "081361225566", name: "Bambang Wicaksono", gender: "L", jabatan: "Tukang",  photo: null, submittedAt: _rd(1, true), status: "Pending" },
+  { id: "pr2", phone: "081361226677", name: "Siti Rahma",         gender: "P", jabatan: "Helper",  photo: null, submittedAt: _rd(0, true), status: "Pending" },
 ];
 
 export function fmtPhone(s: string): string {

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { fmtPhone } from "@/lib/data";
-import { BackButton, ErrorHint } from "./shared";
+import { BackButton, ErrorHint, RegStepper } from "./shared";
 
 export function StepRegPhone({
   phone,
@@ -26,7 +26,8 @@ export function StepRegPhone({
 
   return (
     <>
-      <div className="px-5 pt-5 pb-2">
+      <RegStepper current={1} />
+      <div className="px-5 pb-2">
         <div style={{ fontFamily: "var(--font-newsreader), serif", fontWeight: 400, fontSize: 32, lineHeight: 1.05, letterSpacing: "-0.01em" }}>
           Nomor<br /><em>HP Anda.</em>
         </div>
