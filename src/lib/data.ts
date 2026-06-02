@@ -44,6 +44,9 @@ export type Project = {
   contractValue: number;
   paid: number;
   paymentSplits?: number;
+  summary?: string;
+  daysRunning?: number;
+  photos?: number;
   assigned: string[];
   activity: { t: string; who: string; action: string }[];
 };
@@ -97,6 +100,9 @@ export const PROJECTS: Project[] = [
     progress: 68,
     contractValue: 18500000,
     paid: 11100000,
+    summary: "Lapisan utama sudah diaplikasikan, sedang menunggu cure 24 jam sebelum primer ke-dua. Akses ke lantai 3 disepakati lewat tangga belakang. Klien minta progres foto tiap Jumat sore.",
+    daysRunning: 12,
+    photos: 47,
     assigned: ["w1", "w2", "w3", "w7"],
     activity: [
       { t: "08:15", who: "Pak Suparman", action: "Hadir" },

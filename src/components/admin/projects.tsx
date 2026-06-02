@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, WORKERS, fmtIDRshort, type Project } from "@/lib/data";
+import { WORKERS, fmtIDRshort, type Project } from "@/lib/data";
+import { useProjects, addProject, nextProjectCode } from "@/lib/projects-store";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 const CATEGORIES = [
@@ -21,26 +22,19 @@ const STATUS_MAP = {
 
 type NewProject = Pick<Project,
   "name" | "category" | "address" | "status" | "start" | "endEst" | "contractValue"
-> & { clientName: string; clientPhone: string; paymentSplits: number };
+> & { clientName: string; clientPhone: string; paymentSplits: number; summary: string };
 
 const EMPTY_FORM: NewProject = {
   name: "", category: "", address: "", status: "Draft",
   start: "", endEst: "", contractValue: 0,
-  clientName: "", clientPhone: "", paymentSplits: 1,
+  clientName: "", clientPhone: "", paymentSplits: 1, summary: "",
 };
-
-function nextCode(existing: Project[]) {
-  const max = existing.reduce((n, p) => {
-    const m = p.code.match(/KAS-\d{4}-(\d+)/);
-    return m ? Math.max(n, parseInt(m[1])) : n;
-  }, 0);
-  return `KAS-2026-${String(max + 1).padStart(3, "0")}`;
-}
 
 type StatusFilter = "all" | Project["status"];
 
 export default function AMProjects({ toast }: { toast: (m: string) => void }) {
-  const [extra, setExtra]             = useState<Project[]>([]);
+  const allProjects                   = useProjects();
+  const [newIds, setNewIds]           = useState<Set<string>>(new Set());
   const [showForm, setShowForm]       = useState(false);
   const [form, setForm]               = useState<NewProject>(EMPTY_FORM);
   const [sebelumPhoto, setSebelumPhoto] = useState<string | null>(null);
@@ -51,24 +45,23 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
   const [confirmComplete, setConfirmComplete] = useState<string | null>(null);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
 
-  const allProjects    = [...extra, ...PROJECTS];
   const detail         = allProjects.find((p) => p.id === detailId);
   const filteredProjects = allProjects.filter((p) => statusFilter === "all" || p.status === statusFilter);
 
-  const field = (k: keyof NewProject) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const field = (k: keyof NewProject) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: (k === "contractValue" || k === "paymentSplits") ? Number(e.target.value) : e.target.value }));
 
   const canSubmit = form.name.trim() && form.clientName.trim() && form.category && form.contractValue > 0;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
-    const code = nextCode(allProjects);
+    const code = nextProjectCode();
     const newProj: Project = {
       id:            `p-${Date.now()}`,
       code,
       slug:          code.toLowerCase().replace(/-/g, ""),
       name:          form.name.trim(),
-      client:        { name: form.clientName.trim(), phone: form.clientPhone.trim(), address: form.address.trim() },
+      client:        { name: form.clientName.trim(), phone: form.clientPhone.trim() || "—", address: form.address.trim() || "—" },
       address:       form.address.trim() || form.clientName.trim(),
       category:      form.category,
       status:        form.status,
@@ -78,10 +71,14 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
       contractValue: form.contractValue,
       paid:          0,
       paymentSplits: form.paymentSplits,
+      summary:       form.summary.trim() || "Belum ada catatan internal untuk proyek ini.",
+      daysRunning:   0,
+      photos:        0,
       assigned:      [],
       activity:      [],
     };
-    setExtra((prev) => [newProj, ...prev]);
+    addProject(newProj);
+    setNewIds((prev) => new Set(prev).add(newProj.id));
     toast(`Proyek ${newProj.code} ditambahkan.`);
     setShowForm(false);
     setForm(EMPTY_FORM);
@@ -148,6 +145,15 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
             </div>
           ))}
         </div>
+
+        {detail.summary && (
+          <div className="mt-5">
+            <Kicker no="—" label="CATATAN INTERNAL" />
+            <p style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 16, lineHeight: 1.5, margin: "8px 0 0", color: "var(--kas-ink-2)" }}>
+              {detail.summary}
+            </p>
+          </div>
+        )}
 
         {assigned.length > 0 && (
           <div className="mt-4">
@@ -303,7 +309,7 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
         {filteredProjects.map((p) => {
           const st   = STATUS_MAP[p.status];
           const sisa = p.contractValue - p.paid;
-          const isNew = extra.some((e) => e.id === p.id);
+          const isNew = newIds.has(p.id);
           return (
             <button
               key={p.id}
@@ -454,6 +460,10 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
                 {form.paymentSplits === 1 && (
                   <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-4)", marginTop: 6, letterSpacing: "0.1em" }}>Lunas sekaligus</div>
                 )}
+              </div>
+              <div>
+                <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 5 }}>Catatan Internal</div>
+                <textarea value={form.summary} onChange={field("summary")} rows={3} placeholder="Ringkasan singkat: kondisi, akses lokasi, permintaan klien…" className="w-full px-3 py-3" style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper-2)", fontFamily: "var(--font-newsreader), serif", fontSize: 16, outline: "none", resize: "vertical" }} />
               </div>
             </div>
 

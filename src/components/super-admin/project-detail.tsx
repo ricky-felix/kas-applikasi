@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, fmtIDRshort } from "@/lib/data";
+import { fmtIDRshort } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
 import { MonoLabel, StatusPill, ProgressBar } from "@/components/primitives";
 import { TopBar, Footer } from "./shared";
 import { OverviewTab } from "./project-detail/overview-tab";
@@ -28,7 +29,8 @@ export default function ProjectDetail({
 	id: string;
 	back: () => void;
 }) {
-	const p = PROJECTS.find((x) => x.id === id) || PROJECTS[0];
+	const projects = useProjects();
+	const p = projects.find((x) => x.id === id) || projects[0];
 	const [tab, setTab] = useState("overview");
 	const sisa = p.contractValue - p.paid;
 
