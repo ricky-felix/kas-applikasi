@@ -4,8 +4,22 @@ import { PROJECTS } from "@/lib/data";
 import { Kicker, MonoLabel } from "@/components/primitives";
 import { ConfirmDialog } from "./confirm-dialog";
 
-type Session = { id: number; projectId: string; in: string; out: string | null; lemburJam?: number; lemburEndsAt?: number };
-type Step = "idle" | "location-confirm" | "lembur-check" | "lembur-approval" | "lembur-duration" | "selfie";
+type LemburType = "malam" | "pagi";
+type Session = { id: number; projectId: string; in: string; out: string | null; lemburType?: LemburType };
+type Step = "idle" | "location-confirm" | "selfie";
+
+// Lembur mirrors absensi — the clock decides the kind of attendance:
+//   05:00–16:59 → normal absensi
+//   17:00–23:59 → lembur malam
+//   00:00–04:59 → lembur pagi
+const LEMBUR_MALAM_FROM = 17; // 5 PM
+const LEMBUR_PAGI_UNTIL = 5;  // 5 AM
+export function classifyAttendance(d: Date = new Date()): "normal" | LemburType {
+  const h = d.getHours();
+  if (h >= LEMBUR_MALAM_FROM) return "malam";
+  if (h < LEMBUR_PAGI_UNTIL)  return "pagi";
+  return "normal";
+}
 
 const DAYS_ID   = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
 const MONTHS_ID = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
@@ -34,6 +48,30 @@ function Bracket({ pos }: { pos: "tl"|"tr"|"bl"|"br" }) {
 
 type PermStatus = "pending" | "granted" | "denied";
 
+// ── Face detection (lazy-loaded BlazeFace from CDN) ─────────────────────────
+type FaceStatus = "loading" | "searching" | "detected" | "unavailable";
+const TFJS_URL      = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js";
+const BLAZEFACE_URL = "https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.1.0/dist/blazeface.min.js";
+
+function loadScriptOnce(src: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[data-src="${src}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === "true") { resolve(); return; }
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("script error")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = src;
+    s.async = true;
+    s.dataset.src = src;
+    s.addEventListener("load", () => { s.dataset.loaded = "true"; resolve(); });
+    s.addEventListener("error", () => reject(new Error("script error")));
+    document.head.appendChild(s);
+  });
+}
+
 export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName: string; onCapture: () => void; onCancel: () => void }) {
   const [phase, setPhase]             = useState<"viewfinder"|"captured">("viewfinder");
   const [liveTime, setLiveTime]       = useState(new Date());
@@ -43,6 +81,7 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
   const [capturedImg, setCapturedImg]   = useState<string|null>(null);
   const [camStatus, setCamStatus]       = useState<PermStatus>("pending");
   const [gpsStatus, setGpsStatus]       = useState<PermStatus>("pending");
+  const [faceStatus, setFaceStatus]     = useState<FaceStatus>("loading");
   const [attCode]                       = useState(genCode);
   const videoRef  = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream|null>(null);
@@ -50,6 +89,8 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
   const mountedRef    = useRef(true);
   const watchIdRef    = useRef<number | null>(null);
   const gpsTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const faceModelRef  = useRef<{ estimateFaces: (input: HTMLVideoElement, returnTensors: boolean) => Promise<unknown[]> } | null>(null);
+  const faceTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -224,10 +265,55 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
     return () => clearInterval(id);
   }, [phase]);
 
-  const canCapture = camStatus === "granted" && gpsStatus === "granted";
+  // Load BlazeFace from CDN and continuously check for a face in the frame.
+  // If the model can't be loaded (offline / CDN blocked), fall back to
+  // "unavailable" so the selfie isn't hard-blocked.
+  useEffect(() => {
+    let cancelled = false;
+    const stopLoop = () => {
+      if (faceTimerRef.current) { clearInterval(faceTimerRef.current); faceTimerRef.current = null; }
+    };
+
+    // If the model can't load/initialise in time, stop blocking the selfie.
+    const fallbackTimer = setTimeout(() => {
+      if (!cancelled) setFaceStatus((s) => (s === "loading" ? "unavailable" : s));
+    }, 12000);
+
+    (async () => {
+      try {
+        await loadScriptOnce(TFJS_URL);
+        await loadScriptOnce(BLAZEFACE_URL);
+        const blazeface = (window as unknown as { blazeface?: { load: () => Promise<typeof faceModelRef.current> } }).blazeface;
+        if (!blazeface) throw new Error("blazeface global missing");
+        const model = await blazeface.load();
+        if (cancelled) return;
+        faceModelRef.current = model;
+        setFaceStatus("searching");
+
+        faceTimerRef.current = setInterval(async () => {
+          const v = videoRef.current;
+          const m = faceModelRef.current;
+          if (!v || !m || v.readyState < 2) return;
+          try {
+            const faces = await m.estimateFaces(v, false);
+            if (!cancelled) setFaceStatus(faces.length > 0 ? "detected" : "searching");
+          } catch { /* transient inference error — keep last status */ }
+        }, 500);
+      } catch {
+        if (!cancelled) setFaceStatus("unavailable");
+      }
+    })();
+
+    return () => { cancelled = true; clearTimeout(fallbackTimer); stopLoop(); };
+  }, []);
+
+  // Face must be detected, unless detection is unavailable (CDN blocked).
+  const faceOk     = faceStatus === "detected" || faceStatus === "unavailable";
+  const canCapture = camStatus === "granted" && gpsStatus === "granted" && faceOk;
 
   const handleCapture = () => {
     if (!canCapture) return;
+    if (faceTimerRef.current) { clearInterval(faceTimerRef.current); faceTimerRef.current = null; }
     const now = new Date();
     if (videoRef.current) {
       const v = videoRef.current;
@@ -347,6 +433,18 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
           </div>
         )}
 
+        {/* Face detection indicator */}
+        {phase === "viewfinder" && faceStatus !== "unavailable" && (
+          <div style={{ position:"absolute", top:12, right:14, display:"flex", alignItems:"center", gap:5, background:"rgba(0,0,0,0.45)", padding:"3px 8px", border:`1px solid ${faceStatus==="detected" ? "rgba(74,222,128,0.5)" : "rgba(255,255,255,0.15)"}` }}>
+            {faceStatus === "detected"
+              ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3"><path d="M5 13l4 4L19 7"/></svg>
+              : <span style={{ display:"inline-block", width:6, height:6, borderRadius:"50%", border:"1px solid rgba(255,255,255,0.4)" }}/>}
+            <span style={{ fontFamily:"var(--font-jetbrains),monospace", fontSize:8, letterSpacing:"0.16em", textTransform:"uppercase", color: faceStatus==="detected" ? "#4ade80" : "rgba(255,255,255,0.6)" }}>
+              {faceStatus === "detected" ? "Wajah Terdeteksi" : faceStatus === "loading" ? "Memuat..." : "Mendeteksi Wajah..."}
+            </span>
+          </div>
+        )}
+
         {/* Stamp overlay — always visible */}
         <div style={{ position:"absolute", bottom:0, left:0, right:0 }}>
           <Stamp />
@@ -356,11 +454,16 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
       {/* CTA */}
       {phase === "viewfinder" ? (
         <div style={{ padding:"12px 20px 20px", borderTop:"1px solid rgba(255,255,255,0.05)" }}>
-          {/* Permission status row */}
+          {/* Permission + face status row */}
           <div style={{ display:"flex", gap:8, marginBottom:10 }}>
             {([
               { label:"Kamera", status: camStatus, hint: null },
               { label:"Lokasi", status: gpsStatus, hint: "Izinkan di browser" },
+              {
+                label: "Wajah",
+                status: (faceStatus === "detected" || faceStatus === "unavailable" ? "granted" : "pending") as PermStatus,
+                hint: faceStatus === "loading" ? "Memuat..." : faceStatus === "searching" ? "Posisikan wajah" : null,
+              },
             ] as const).map(({ label, status, hint }) => (
               <div key={label} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:2, padding:"6px 4px", border:`1px solid ${status==="granted" ? "rgba(74,222,128,0.4)" : status==="denied" ? "rgba(248,113,113,0.5)" : "rgba(255,255,255,0.1)"}`, background: status==="granted" ? "rgba(74,222,128,0.06)" : status==="denied" ? "rgba(248,113,113,0.08)" : "transparent" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:5 }}>
@@ -402,7 +505,15 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
             style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:10, padding:"16px 0", background: canCapture ? "#ffffff" : "rgba(255,255,255,0.1)", color: canCapture ? "#0a0a0f" : "rgba(255,255,255,0.25)", border:"none", cursor: canCapture ? "pointer" : "default", fontFamily:"var(--font-manrope),sans-serif", fontWeight:700, fontSize:13, letterSpacing:"0.08em", textTransform:"uppercase" }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="6" width="18" height="14"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>
-            {canCapture ? "Ambil Selfie" : gpsStatus==="pending" || camStatus==="pending" ? "Menunggu izin..." : "Izin diperlukan"}
+            {canCapture
+              ? "Ambil Selfie"
+              : gpsStatus === "pending" || camStatus === "pending"
+              ? "Menunggu izin..."
+              : camStatus === "denied" || gpsStatus === "denied"
+              ? "Izin diperlukan"
+              : faceStatus === "loading"
+              ? "Memuat pendeteksi wajah..."
+              : "Posisikan wajah Anda"}
           </button>
         </div>
       ) : (
@@ -425,31 +536,7 @@ function ClockIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-function isAfterSixPM() {
-  return new Date().getHours() >= 18;
-}
-
-const LEMBUR_HOURS = [1, 2, 3, 4, 5];
-
-function useCountdown(endsAt: number | undefined) {
-  const [msLeft, setMsLeft] = useState(() => endsAt ? Math.max(0, endsAt - Date.now()) : 0);
-  useEffect(() => {
-    if (!endsAt) return;
-    const tick = () => setMsLeft(Math.max(0, endsAt - Date.now()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [endsAt]);
-  return msLeft;
-}
-
-function fmtCountdown(ms: number) {
-  const s = Math.floor(ms / 1000);
-  const hh = String(Math.floor(s / 3600)).padStart(2, "0");
-  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-  const ss = String(s % 60).padStart(2, "0");
-  return { hh, mm, ss };
-}
+const LEMBUR_LABEL: Record<LemburType, string> = { malam: "Lembur Malam", pagi: "Lembur Pagi" };
 
 export function ClockSection({
   selectedProj,
@@ -468,27 +555,19 @@ export function ClockSection({
   workerName: string;
   onClockIn: () => void;
   onClockOut: () => void;
-  onClockInLembur: (hours: number) => void;
+  onClockInLembur: (type: LemburType) => void;
 }) {
   const [step, setStep] = useState<Step>("idle");
-  const [pendingLemburHours, setPendingLemburHours] = useState<number | null>(null);
-  const msLeft = useCountdown(activeSession?.lemburEndsAt);
+  // The clock decides whether this clock-in is normal absensi or lembur.
+  const attendanceKind = classifyAttendance();
 
   if (!selectedProj) return null;
 
   const selectedActive    = activeSession && activeSession.projectId === selectedProj.id;
   const someoneElseActive = activeSession && activeSession.projectId !== selectedProj.id;
-  const isLemburActive    = !!(selectedActive && activeSession.lemburEndsAt);
-  const lemburDone        = isLemburActive && msLeft === 0;
-  const countdown         = fmtCountdown(msLeft);
+  const activeLembur      = selectedActive ? activeSession.lemburType : undefined;
 
-  const handleMasukClick = () => {
-    if (isAfterSixPM()) {
-      setStep("lembur-check");
-    } else {
-      setStep("location-confirm");
-    }
-  };
+  const handleMasukClick = () => setStep("location-confirm");
 
   const reset = () => setStep("idle");
 
@@ -518,39 +597,11 @@ export function ClockSection({
     <>
       <div className="mt-4">
         <Kicker no="02" label={`JAM KERJA · ${selectedProj.address.toUpperCase()}`} />
-        {selectedActive && isLemburActive ? (
-          <div style={{ border: `2px solid ${lemburDone ? "var(--kas-rust)" : "var(--kas-ochre)"}` }}>
-            <div className="px-4 pt-4 pb-3" style={{ background: lemburDone ? "var(--kas-rust)" : "var(--kas-ochre)" }}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-block" style={{ width: 8, height: 8, background: "var(--kas-ink)", opacity: 0.5 }} />
-                <MonoLabel size={9}>{lemburDone ? "WAKTU LEMBUR HABIS" : `LEMBUR · ${activeSession.lemburJam}J DISETUJUI`}</MonoLabel>
-              </div>
-              <div className="flex items-end gap-1" style={{ fontFamily: "var(--font-newsreader), serif", fontWeight: 500, letterSpacing: "-0.02em", lineHeight: 1 }}>
-                <span style={{ fontSize: 56 }}>{countdown.hh}</span>
-                <span style={{ fontSize: 36, marginBottom: 4, opacity: 0.5 }}>:</span>
-                <span style={{ fontSize: 56 }}>{countdown.mm}</span>
-                <span style={{ fontSize: 36, marginBottom: 4, opacity: 0.5 }}>:</span>
-                <span style={{ fontSize: 56 }}>{countdown.ss}</span>
-              </div>
-              <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", marginTop: 6, opacity: 0.6 }}>
-                {lemburDone ? "Segera selesaikan pekerjaan" : "Sisa waktu lembur"}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onClockOut}
-              className="w-full flex items-center justify-center gap-2.5"
-              style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", fontFamily: "var(--font-newsreader), serif", fontWeight: 500, fontSize: 24, padding: "20px 14px", cursor: "pointer" }}
-            >
-              <ClockIcon />
-              <span>Selesai <em>lembur.</em></span>
-            </button>
-          </div>
-        ) : selectedActive ? (
-          <div className="p-4" style={{ background: "var(--kas-paper-2)", border: "1px solid var(--kas-ink)" }}>
+        {selectedActive ? (
+          <div className="p-4" style={{ background: "var(--kas-paper-2)", border: `1px solid ${activeLembur ? "var(--kas-ochre)" : "var(--kas-ink)"}` }}>
             <div className="flex items-center gap-3 mb-2.5">
-              <span className="inline-block" style={{ width: 8, height: 8, background: "var(--kas-cobalt)" }} />
-              <MonoLabel size={10}>SEDANG BEKERJA</MonoLabel>
+              <span className="inline-block" style={{ width: 8, height: 8, background: activeLembur ? "var(--kas-ochre)" : "var(--kas-cobalt)" }} />
+              <MonoLabel size={10}>{activeLembur ? `SEDANG ${LEMBUR_LABEL[activeLembur].toUpperCase()}` : "SEDANG BEKERJA"}</MonoLabel>
             </div>
             <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", borderTop: "1px solid var(--kas-line)", borderBottom: "1px solid var(--kas-line)" }}>
               <div className="py-3.5 pr-3.5" style={{ borderRight: "1px solid var(--kas-line)" }}>
@@ -564,7 +615,7 @@ export function ClockSection({
             </div>
             <button type="button" onClick={onClockOut} className="w-full mt-3.5 flex items-center justify-center gap-2.5" style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", fontFamily: "var(--font-newsreader), serif", fontWeight: 500, fontSize: 24, padding: "20px 14px", cursor: "pointer" }}>
               <ClockIcon />
-              <span>Pulang <em>kerja.</em></span>
+              <span>{activeLembur ? <>Selesai <em>lembur.</em></> : <>Pulang <em>kerja.</em></>}</span>
             </button>
           </div>
         ) : someoneElseActive ? (
@@ -578,13 +629,24 @@ export function ClockSection({
             </button>
           </div>
         ) : (
-          <button type="button" onClick={handleMasukClick} className="w-full flex items-center justify-center gap-3 relative" style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", fontFamily: "var(--font-newsreader), serif", fontWeight: 500, fontSize: 28, padding: "26px 14px", cursor: "pointer" }}>
+          <button type="button" onClick={handleMasukClick} className="w-full flex items-center justify-center gap-3 relative" style={{ border: "none", background: attendanceKind === "normal" ? "var(--kas-ink)" : "var(--kas-ochre)", color: attendanceKind === "normal" ? "var(--kas-paper)" : "var(--kas-ink)", fontFamily: "var(--font-newsreader), serif", fontWeight: 500, fontSize: attendanceKind === "normal" ? 28 : 24, padding: "26px 14px", cursor: "pointer" }}>
             <ClockIcon size={22} />
-            <span>Masuk <em>kerja.</em></span>
+            <span>{attendanceKind === "normal" ? <>Masuk <em>kerja.</em></> : <>Masuk · <em>{LEMBUR_LABEL[attendanceKind]}.</em></>}</span>
             <span className="absolute top-2 right-2 inline-block" style={{ width: 8, height: 8, background: "var(--kas-rust)" }} />
           </button>
         )}
       </div>
+
+      {/* Lembur context note — clarifies why the button shows lembur */}
+      {!selectedActive && !someoneElseActive && attendanceKind !== "normal" && (
+        <div className="mt-2 px-3 py-2.5" style={{ background: "var(--kas-ochre-soft)", border: "1px solid var(--kas-ochre)" }}>
+          <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ochre-ink)", letterSpacing: "0.08em", lineHeight: 1.6 }}>
+            {attendanceKind === "malam"
+              ? "Jam normal sudah lewat pukul 17:00 — kehadiran ini dicatat sebagai lembur malam."
+              : "Masuk sebelum pukul 05:00 — kehadiran ini dicatat sebagai lembur pagi."}
+          </div>
+        </div>
+      )}
 
       {step === "location-confirm" && (
         <ConfirmDialog
@@ -597,88 +659,16 @@ export function ClockSection({
         />
       )}
 
-      {step === "lembur-check" && (
-        <ConfirmDialog
-          message="Apakah ini jam lembur?"
-          sub="Jam kerja normal sudah lewat pukul 18:00. Apakah Anda masuk untuk lembur?"
-          confirmLabel="Ya, ini lembur"
-          cancelLabel="Tidak, kerja biasa"
-          onConfirm={() => setStep("lembur-approval")}
-          onCancel={() => setStep("location-confirm")}
-        />
-      )}
-
-      {step === "lembur-approval" && (
-        <ConfirmDialog
-          message="Apakah lembur sudah di-approve bos?"
-          sub="Lembur hanya boleh dicatat jika sudah mendapat konfirmasi dari mandor atau pemilik proyek."
-          confirmLabel="Ya, sudah di-approve"
-          cancelLabel="Belum"
-          onConfirm={() => setStep("lembur-duration")}
-          onCancel={reset}
-        />
-      )}
-
       {step === "selfie" && (
         <SelfieCapture
           workerName={workerName}
           onCapture={() => {
-            if (pendingLemburHours !== null) {
-              const h = pendingLemburHours;
-              setPendingLemburHours(null);
-              reset();
-              onClockInLembur(h);
-            } else {
-              reset();
-              onClockIn();
-            }
+            reset();
+            if (attendanceKind === "normal") onClockIn();
+            else onClockInLembur(attendanceKind);
           }}
-          onCancel={() => { setPendingLemburHours(null); reset(); }}
+          onCancel={reset}
         />
-      )}
-
-      {step === "lembur-duration" && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 px-5"
-          style={{ background: "rgba(22,28,44,0.5)" }}
-          onClick={reset}
-        >
-          <div
-            className="w-full max-w-md"
-            style={{ background: "var(--kas-paper)", border: "2px solid var(--kas-ink)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="px-6 pt-6 pb-2">
-              <div style={{ fontFamily: "var(--font-newsreader), serif", fontWeight: 400, fontSize: 22, lineHeight: 1.2, letterSpacing: "-0.01em" }}>
-                Berapa jam lembur?
-              </div>
-              <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", letterSpacing: "0.1em", marginTop: 8, lineHeight: 1.5 }}>
-                DURASI YANG DISETUJUI BOS
-              </div>
-            </div>
-            <div className="grid px-6 pt-4 gap-2" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
-              {LEMBUR_HOURS.map((h) => (
-                <button
-                  key={h}
-                  type="button"
-                  onClick={() => { setPendingLemburHours(h); setStep("selfie"); }}
-                  style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", color: "var(--kas-ink)", padding: "16px 0", fontFamily: "var(--font-newsreader), serif", fontSize: 22, fontWeight: 500, cursor: "pointer", textAlign: "center" }}
-                >
-                  {h}<span style={{ fontSize: 12 }}>j</span>
-                </button>
-              ))}
-            </div>
-            <div className="px-6 pb-6 pt-4">
-              <button
-                type="button"
-                onClick={reset}
-                style={{ border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: 0 }}
-              >
-                ← Batal
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </>
   );

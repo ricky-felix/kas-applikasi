@@ -21,12 +21,12 @@ const STATUS_MAP = {
 
 type NewProject = Pick<Project,
   "name" | "category" | "address" | "status" | "start" | "endEst" | "contractValue"
-> & { clientName: string; clientPhone: string };
+> & { clientName: string; clientPhone: string; paymentSplits: number };
 
 const EMPTY_FORM: NewProject = {
   name: "", category: "", address: "", status: "Draft",
   start: "", endEst: "", contractValue: 0,
-  clientName: "", clientPhone: "",
+  clientName: "", clientPhone: "", paymentSplits: 1,
 };
 
 function nextCode(existing: Project[]) {
@@ -56,7 +56,7 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
   const filteredProjects = allProjects.filter((p) => statusFilter === "all" || p.status === statusFilter);
 
   const field = (k: keyof NewProject) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm((f) => ({ ...f, [k]: k === "contractValue" ? Number(e.target.value) : e.target.value }));
+    setForm((f) => ({ ...f, [k]: (k === "contractValue" || k === "paymentSplits") ? Number(e.target.value) : e.target.value }));
 
   const canSubmit = form.name.trim() && form.clientName.trim() && form.category && form.contractValue > 0;
 
@@ -77,6 +77,7 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
       progress:      0,
       contractValue: form.contractValue,
       paid:          0,
+      paymentSplits: form.paymentSplits,
       assigned:      [],
       activity:      [],
     };
@@ -408,6 +409,50 @@ export default function AMProjects({ toast }: { toast: (m: string) => void }) {
                 <input value={form.contractValue || ""} onChange={field("contractValue")} type="number" min="0" placeholder="0" className="w-full px-3 py-3" style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-newsreader), serif", fontSize: 20, outline: "none" }} />
                 {form.contractValue > 0 && (
                   <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", marginTop: 4, letterSpacing: "0.1em" }}>{fmtIDRshort(form.contractValue)}</div>
+                )}
+              </div>
+              <div>
+                <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 8 }}>Pembayaran Bertahap *</div>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, paymentSplits: n }))}
+                      style={{
+                        flex: 1,
+                        border: `1px solid ${form.paymentSplits === n ? "var(--kas-ink)" : "var(--kas-line)"}`,
+                        background: form.paymentSplits === n ? "var(--kas-ink)" : "transparent",
+                        color: form.paymentSplits === n ? "var(--kas-paper)" : "var(--kas-ink-3)",
+                        padding: "10px 0",
+                        fontFamily: "var(--font-newsreader), serif",
+                        fontSize: 18,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {n}×
+                    </button>
+                  ))}
+                </div>
+                {form.contractValue > 0 && form.paymentSplits > 1 && (
+                  <div className="mt-3 px-3 py-3" style={{ background: "var(--kas-paper-2)", border: "1px solid var(--kas-line)" }}>
+                    <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-4)", marginBottom: 8 }}>Rincian termin</div>
+                    {Array.from({ length: form.paymentSplits }).map((_, i) => {
+                      const base = Math.floor(form.contractValue / form.paymentSplits);
+                      const amount = i === form.paymentSplits - 1
+                        ? form.contractValue - base * (form.paymentSplits - 1)
+                        : base;
+                      return (
+                        <div key={i} className="flex justify-between items-baseline py-1.5" style={{ borderBottom: i < form.paymentSplits - 1 ? "1px solid var(--kas-line-2)" : "none" }}>
+                          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", letterSpacing: "0.1em" }}>Termin {i + 1}</span>
+                          <span style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 15, fontWeight: 500 }}>{fmtIDRshort(amount)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {form.paymentSplits === 1 && (
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-4)", marginTop: 6, letterSpacing: "0.1em" }}>Lunas sekaligus</div>
                 )}
               </div>
             </div>

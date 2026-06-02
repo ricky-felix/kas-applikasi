@@ -87,14 +87,12 @@ export function StepRegProfile({
   name,
   gender,
   jabatan,
-  jabatanLainnya,
   errorMsg,
   isPending,
   onPhotoChange,
   onNameChange,
   onGenderChange,
   onJabatanChange,
-  onJabatanLainnyaChange,
   onSubmit,
   onBack,
 }: {
@@ -102,22 +100,19 @@ export function StepRegProfile({
   name: string;
   gender: Gender | null;
   jabatan: Jabatan | null;
-  jabatanLainnya: string;
   errorMsg: string | null;
   isPending: boolean;
   onPhotoChange: (v: string) => void;
   onNameChange: (v: string) => void;
   onGenderChange: (v: Gender) => void;
   onJabatanChange: (v: Jabatan) => void;
-  onJabatanLainnyaChange: (v: string) => void;
   onSubmit: () => void;
   onBack: () => void;
 }) {
   const ready =
     name.trim().length > 0 &&
     gender !== null &&
-    jabatan !== null &&
-    (jabatan !== "Lainnya" || jabatanLainnya.trim().length > 0);
+    jabatan !== null;
 
   const btnBase: React.CSSProperties = {
     border: "1px solid var(--kas-ink)",
@@ -206,17 +201,6 @@ export function StepRegProfile({
               </button>
             ))}
           </div>
-          {jabatan === "Lainnya" && (
-            <input
-              type="text"
-              value={jabatanLainnya}
-              onChange={(e) => onJabatanLainnyaChange(e.target.value)}
-              placeholder="Jabatan Anda"
-              autoFocus
-              className="w-full px-3.5 py-3 mt-3"
-              style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-newsreader), serif", fontSize: 14, color: "var(--kas-ink)", outline: "none" }}
-            />
-          )}
         </div>
 
         <ErrorHint message={errorMsg} />

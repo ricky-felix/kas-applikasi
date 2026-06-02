@@ -119,7 +119,7 @@ export function StepPhone({
 
         <div className="mt-2">
           <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", textTransform: "uppercase", letterSpacing: "0.16em", marginBottom: 6 }}>
-            Demo · pilih cepat
+            Demo · untuk melihat tampilan posisi klik dibawah ini
           </div>
           <div className="flex flex-wrap gap-1.5">
             {ACCOUNTS.map((a) => (

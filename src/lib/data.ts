@@ -43,6 +43,7 @@ export type Project = {
   progress: number;
   contractValue: number;
   paid: number;
+  paymentSplits?: number;
   assigned: string[];
   activity: { t: string; who: string; action: string }[];
 };
@@ -75,9 +76,9 @@ export const WORKERS: Worker[] = [
   { id: "w1", name: "Pak Suparman",  short: "SP", role: "Tukang Senior",  phone: "+62 813 6122 0901", rate: 250000 },
   { id: "w2", name: "Budi Hartono",  short: "BH", role: "Tukang",         phone: "+62 813 6122 1502", rate: 200000 },
   { id: "w3", name: "Eko Prasetyo",  short: "EP", role: "Tukang",         phone: "+62 813 6122 9821", rate: 200000 },
-  { id: "w4", name: "Dedi Saragih",  short: "DS", role: "Tukang Madya",   phone: "+62 813 6122 4470", rate: 220000 },
+  { id: "w4", name: "Dedi Saragih",  short: "DS", role: "Tukang",   phone: "+62 813 6122 4470", rate: 220000 },
   { id: "w5", name: "Joko Sianturi", short: "JS", role: "Tukang",         phone: "+62 813 6122 7733", rate: 200000 },
-  { id: "w6", name: "Rahmat Sinaga", short: "RS", role: "Helper",         phone: "+62 813 6122 8810", rate: 150000 },
+  { id: "w6", name: "Rahmat Sinaga", short: "RS", role: "Tukang Junior",         phone: "+62 813 6122 8810", rate: 150000 },
   { id: "w7", name: "Pak Anto",     short: "AN", role: "Tukang Senior",  phone: "+62 813 6122 3301", rate: 400000, isKepalaProyek: true },
 ];
 
@@ -98,10 +99,10 @@ export const PROJECTS: Project[] = [
     paid: 11100000,
     assigned: ["w1", "w2", "w3", "w7"],
     activity: [
-      { t: "08:15", who: "Pak Suparman", action: "Check-in Hadir" },
-      { t: "08:14", who: "Budi Hartono", action: "Check-in Hadir" },
+      { t: "08:15", who: "Pak Suparman", action: "Hadir" },
+      { t: "08:14", who: "Budi Hartono", action: "Hadir" },
       { t: "07:51", who: "Eko Prasetyo", action: "Setengah Hari" },
-      { t: "Kemarin", who: "Pak Suparman", action: "Upload foto progres (3)" },
+      { t: "Kemarin", who: "Pak Anto", action: "Upload foto progres (3)" },
     ],
   },
   {
@@ -120,8 +121,8 @@ export const PROJECTS: Project[] = [
     paid: 43500000,
     assigned: ["w1", "w4", "w5", "w6", "w7"],
     activity: [
-      { t: "08:20", who: "Dedi Saragih",  action: "Check-in Hadir" },
-      { t: "08:18", who: "Joko Sianturi", action: "Check-in Hadir" },
+      { t: "08:20", who: "Dedi Saragih",  action: "Hadir" },
+      { t: "08:18", who: "Joko Sianturi", action: "Hadir" },
     ],
   },
   {
@@ -300,26 +301,28 @@ export const EXPENSES: Expense[] = [
   { id: "e10", projectId: "p2", date: _rd(4),  category: "Lain-lain",   description: "Konsumsi lapangan 3 hari",          amount: 360000,  by: "Dedi Saragih" },
 ];
 
+// Laporan harian is filed by the kepala proyek (Pak Anto, w7) for each project.
 export const WORK_REPORTS: WorkReport[] = [
-  { id: "r1", projectId: "p1", workerId: "w1", workerName: "Pak Suparman",  workerShort: "SP", date: _rd(0), note: "Aplikasi lapisan ke-2 waterproofing selesai 25m². Area selatan sudah kering sempurna.", photos: 3 },
-  { id: "r2", projectId: "p1", workerId: "w2", workerName: "Budi Hartono",  workerShort: "BH", date: _rd(0), note: "Bantu Pak Suparman di area selatan. Persiapan area utara untuk besok.", photos: 1 },
-  { id: "r3", projectId: "p2", workerId: "w4", workerName: "Dedi Saragih",  workerShort: "DS", date: _rd(0), note: "Waterproofing basement lantai B1 zona 3 selesai. Tunggu curing 24 jam.", photos: 2 },
-  { id: "r4", projectId: "p1", workerId: "w1", workerName: "Pak Suparman",  workerShort: "SP", date: _rd(1), note: "Primer coat zona tengah selesai. Cuaca panas, pengeringan lebih cepat dari estimasi.", photos: 2 },
-  { id: "r5", projectId: "p2", workerId: "w5", workerName: "Joko Sianturi", workerShort: "JS", date: _rd(1), note: "Persiapan permukaan B2 zona 1. Ada retakan kecil, sudah ditambal dengan Sika Latex.", photos: 1 },
+  { id: "r1", projectId: "p1", workerId: "w7", workerName: "Pak Anto", workerShort: "AN", date: _rd(0), note: "Aplikasi lapisan ke-2 waterproofing selesai 25m². Area selatan sudah kering sempurna.", photos: 3 },
+  { id: "r2", projectId: "p2", workerId: "w7", workerName: "Pak Anto", workerShort: "AN", date: _rd(0), note: "Waterproofing basement lantai B1 zona 3 selesai. Tunggu curing 24 jam.", photos: 2 },
+  { id: "r3", projectId: "p1", workerId: "w7", workerName: "Pak Anto", workerShort: "AN", date: _rd(1), note: "Primer coat zona tengah selesai. Cuaca panas, pengeringan lebih cepat dari estimasi.", photos: 2 },
+  { id: "r4", projectId: "p2", workerId: "w7", workerName: "Pak Anto", workerShort: "AN", date: _rd(1), note: "Persiapan permukaan B2 zona 1. Ada retakan kecil, sudah ditambal dengan Sika Latex.", photos: 1 },
+  { id: "r5", projectId: "p1", workerId: "w7", workerName: "Pak Anto", workerShort: "AN", date: _rd(2), note: "Tim fokus di area utara. Persiapan permukaan dan pembersihan selesai.", photos: 1 },
 ];
 
+// Material requests are raised by the kepala proyek (Pak Anto, w7) on behalf of the team.
 export const MATERIAL_REQUESTS: MaterialRequest[] = [
-  { id: "mr1", projectId: "p1", workerId: "w1", workerName: "Pak Suparman",  materialId: "m1", materialName: "Sika Top Seal-107",  qty: 20, unit: "kg",  date: _rd(0), status: "Pending",   note: "Untuk lapisan ke-3 area utara" },
-  { id: "mr2", projectId: "p2", workerId: "w4", workerName: "Dedi Saragih",  materialId: "m4", materialName: "Primer Coat",        qty: 5,  unit: "ltr", date: _rd(0), status: "Pending" },
-  { id: "mr3", projectId: "p1", workerId: "w2", workerName: "Budi Hartono",  materialId: "m3", materialName: "Kuas Roll 9\"",      qty: 4,  unit: "pcs", date: _rd(1), status: "Disetujui" },
-  { id: "mr4", projectId: "p2", workerId: "w5", workerName: "Joko Sianturi", materialId: "m2", materialName: "Aquaproof Original", qty: 10, unit: "kg",  date: _rd(2), status: "Disetujui" },
-  { id: "mr5", projectId: "p2", workerId: "w6", workerName: "Rahmat Sinaga", materialId: "m6", materialName: "Net Fiber Glass",    qty: 30, unit: "m²",  date: _rd(3), status: "Ditolak",  note: "Stok cukup, ambil dari gudang" },
+  { id: "mr1", projectId: "p1", workerId: "w7", workerName: "Pak Anto", materialId: "m1", materialName: "Sika Top Seal-107",  qty: 20, unit: "kg",  date: _rd(0), status: "Pending",   note: "Untuk lapisan ke-3 area utara" },
+  { id: "mr2", projectId: "p2", workerId: "w7", workerName: "Pak Anto", materialId: "m4", materialName: "Primer Coat",        qty: 5,  unit: "ltr", date: _rd(0), status: "Pending" },
+  { id: "mr3", projectId: "p1", workerId: "w7", workerName: "Pak Anto", materialId: "m3", materialName: "Kuas Roll 9\"",      qty: 4,  unit: "pcs", date: _rd(1), status: "Disetujui" },
+  { id: "mr4", projectId: "p2", workerId: "w7", workerName: "Pak Anto", materialId: "m2", materialName: "Aquaproof Original", qty: 10, unit: "kg",  date: _rd(2), status: "Disetujui" },
+  { id: "mr5", projectId: "p2", workerId: "w7", workerName: "Pak Anto", materialId: "m6", materialName: "Net Fiber Glass",    qty: 30, unit: "m²",  date: _rd(3), status: "Ditolak",  note: "Stok cukup, ambil dari gudang" },
 ];
 
 export const CHANGE_ORDERS: ChangeOrder[] = [
   { id: "co1", projectId: "p1", date: _rd(6),  description: "Penambahan area waterproofing dak teras samping ±15m²", costImpact: 2250000, status: "Disetujui", requestedBy: "Bpk. Wijaya" },
   { id: "co2", projectId: "p2", date: _rd(14), description: "Perluasan cakupan ke lantai B3 zona tangga darurat",    costImpact: 8500000, status: "Menunggu",  requestedBy: "PT. Sentra Properti" },
-  { id: "co3", projectId: "p2", date: _rd(9),  description: "Material upgrade: Sika ke Mapei sistem zona kritis",    costImpact: 3200000, status: "Ditolak",   requestedBy: "Pak Suparman" },
+  { id: "co3", projectId: "p2", date: _rd(9),  description: "Material upgrade: Sika ke Mapei sistem zona kritis",    costImpact: 3200000, status: "Ditolak",   requestedBy: "Pak Anto" },
 ];
 
 export const PAYROLL_MAY: PayrollEntry[] = [
@@ -333,13 +336,13 @@ export const PAYROLL_MAY: PayrollEntry[] = [
   { workerId: "w3", name: "Eko Prasetyo",  role: "Tukang",        rate: 200000, projects: [
     { projectId: "p1", code: "KAS-2026-014", daysPresent: 9,  daysHalf: 3 },
   ]},
-  { workerId: "w4", name: "Dedi Saragih",  role: "Tukang Madya",  rate: 220000, projects: [
+  { workerId: "w4", name: "Dedi Saragih",  role: "Tukang",  rate: 220000, projects: [
     { projectId: "p2", code: "KAS-2026-013", daysPresent: 18, daysHalf: 1 },
   ]},
   { workerId: "w5", name: "Joko Sianturi", role: "Tukang",        rate: 200000, projects: [
     { projectId: "p2", code: "KAS-2026-013", daysPresent: 17, daysHalf: 2 },
   ]},
-  { workerId: "w6", name: "Rahmat Sinaga", role: "Helper",        rate: 150000, projects: [
+  { workerId: "w6", name: "Rahmat Sinaga", role: "Tukang Junior",        rate: 150000, projects: [
     { projectId: "p2", code: "KAS-2026-013", daysPresent: 19, daysHalf: 0 },
   ]},
   { workerId: "w7", name: "Pak Anto",     role: "Tukang Senior", rate: 400000, projects: [
@@ -469,7 +472,7 @@ export type PendingRegistration = {
 
 export const PENDING_REGISTRATIONS: PendingRegistration[] = [
   { id: "pr1", phone: "081361225566", name: "Bambang Wicaksono", gender: "L", jabatan: "Tukang",  photo: null, submittedAt: _rd(1, true), status: "Pending" },
-  { id: "pr2", phone: "081361226677", name: "Siti Rahma",         gender: "P", jabatan: "Helper",  photo: null, submittedAt: _rd(0, true), status: "Pending" },
+  { id: "pr2", phone: "081361226677", name: "Siti Rahma",         gender: "P", jabatan: "Tukang Junior",  photo: null, submittedAt: _rd(0, true), status: "Pending" },
 ];
 
 export function fmtPhone(s: string): string {

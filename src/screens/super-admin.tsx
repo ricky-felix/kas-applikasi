@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Account } from "@/lib/data";
+import { Account, MATERIALS, MATERIAL_REQUESTS, CHANGE_ORDERS } from "@/lib/data";
 import { KasBrandMark } from "@/components/primitives";
+import { EditProfileOverlay } from "@/components/profile/edit-profile";
 import Dashboard from "@/components/super-admin/dashboard";
 import ProjectsList from "@/components/super-admin/projects-list";
 import ProjectDetail from "@/components/super-admin/project-detail";
@@ -16,6 +17,13 @@ import LaporanPage from "@/components/super-admin/laporan-page";
 import MaterialRequestsPage from "@/components/super-admin/material-requests-page";
 import ChangeOrdersPage from "@/components/super-admin/change-orders-page";
 import ContactsPage from "@/components/super-admin/contacts-page";
+import NotificationsPage from "@/components/super-admin/notifications-page";
+
+// Badge count for the sidebar — operational items that need action
+const NOTIF_COUNT =
+	MATERIALS.filter((m) => m.stock < m.minStock).length +
+	MATERIAL_REQUESTS.filter((r) => r.status === "Pending").length +
+	CHANGE_ORDERS.filter((c) => c.status === "Menunggu").length;
 
 type Page =
 	| "dashboard"
@@ -31,7 +39,8 @@ type Page =
 	| "permintaan-material"
 	| "change-order"
 	| "analytics"
-	| "contacts";
+	| "contacts"
+	| "notifikasi";
 
 function Sidebar({
 	view,
@@ -41,25 +50,28 @@ function Sidebar({
 }: {
 	view: { page: Page };
 	setView: (v: { page: Page }) => void;
-	session: { name: string; short: string };
+	session: { name: string; short: string; phone?: string };
 	onLogout: () => void;
 }) {
+	const [showEdit, setShowEdit] = useState(false);
+	const [profile, setProfile] = useState<{ name: string; phone: string; photo: string | null }>({ name: session.name, phone: session.phone ?? "", photo: null });
 	const GROUPS = [
 		{
 			label: "Operasional",
 			items: [
-				{ k: "dashboard", label: "Dashboard" },
-				{ k: "projects", label: "Proyek" },
-				{ k: "timeline", label: "Timeline" },
-				{ k: "laporan", label: "Laporan Harian" },
+				{ k: "dashboard",           label: "Dashboard" },
+				{ k: "notifikasi",          label: "Notifikasi" },
+				{ k: "projects",            label: "Proyek" },
+				{ k: "timeline",            label: "Timeline" },
+				{ k: "laporan",             label: "Laporan Harian" },
 				{ k: "permintaan-material", label: "Permintaan Material" },
-				{ k: "change-order", label: "Ubah Order" },
+				{ k: "change-order",        label: "Ubah Order" },
 			],
 		},
 		{
 			label: "Tim & Sumber Daya",
 			items: [
-				{ k: "team", label: "Pekerja Lapangan" },
+				{ k: "team",     label: "Pekerja Lapangan" },
 				{ k: "material", label: "Material" },
 			],
 		},
@@ -73,8 +85,8 @@ function Sidebar({
 		{
 			label: "Administrasi",
 			items: [
-				{ k: "users", label: "Pengguna" },
-				{ k: "contacts", label: "Direktori Kontak" },
+				{ k: "users",     label: "Pengguna" },
+				{ k: "contacts",  label: "Direktori Kontak" },
 				{ k: "analytics", label: "Analitik" },
 			],
 		},
@@ -138,7 +150,6 @@ function Sidebar({
 					);
 					return (
 						<div key={group.label}>
-							{/* Group header */}
 							<button
 								type="button"
 								onClick={() => toggleGroup(group.label)}
@@ -177,12 +188,12 @@ function Sidebar({
 								</span>
 							</button>
 
-							{/* Group items */}
 							{isOpen &&
 								group.items.map((it) => {
 									const active =
 										view.page === it.k ||
 										(it.k === "projects" && view.page === "project");
+									const isNotif = it.k === "notifikasi";
 									return (
 										<button
 											key={it.k}
@@ -203,16 +214,38 @@ function Sidebar({
 											}}
 										>
 											<span>{it.label}</span>
-											{active && (
-												<span
-													className="inline-block"
-													style={{
-														width: 5,
-														height: 5,
-														background: "var(--kas-cobalt)",
-													}}
-												/>
-											)}
+											<span className="flex items-center gap-1.5">
+												{isNotif && NOTIF_COUNT > 0 && (
+													<span
+														style={{
+															minWidth: 18,
+															height: 18,
+															background: "var(--kas-rust)",
+															color: "#fff",
+															fontFamily: "var(--font-jetbrains), monospace",
+															fontSize: 9,
+															fontWeight: 700,
+															display: "flex",
+															alignItems: "center",
+															justifyContent: "center",
+															padding: "0 4px",
+															letterSpacing: 0,
+														}}
+													>
+														{NOTIF_COUNT}
+													</span>
+												)}
+												{active && (
+													<span
+														style={{
+															display: "inline-block",
+															width: 5,
+															height: 5,
+															background: "var(--kas-cobalt)",
+														}}
+													/>
+												)}
+											</span>
 										</button>
 									);
 								})}
@@ -248,14 +281,26 @@ function Sidebar({
 							fontFamily: "var(--font-newsreader), serif",
 							fontSize: 12,
 							fontWeight: 600,
+							overflow: "hidden",
 						}}
 					>
-						{session.short[0]}
+						{profile.photo ? (
+								// eslint-disable-next-line @next/next/no-img-element
+								<img src={profile.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+							) : (
+								session.short[0]
+							)}
 					</div>
 					<div className="flex-1">
-						<div style={{ fontSize: 13, fontWeight: 600 }}>{session.name}</div>
-						<div
+						<div style={{ fontSize: 13, fontWeight: 600 }}>{profile.name}</div>
+						<button
+							type="button"
+							onClick={() => setShowEdit(true)}
 							style={{
+								border: "none",
+								background: "transparent",
+								padding: 0,
+								cursor: "pointer",
 								fontFamily: "var(--font-jetbrains), monospace",
 								fontSize: 9,
 								letterSpacing: "0.16em",
@@ -263,8 +308,8 @@ function Sidebar({
 								textTransform: "uppercase",
 							}}
 						>
-							Super Admin
-						</div>
+							Super Admin · Edit
+						</button>
 					</div>
 					<button
 						onClick={onLogout}
@@ -284,6 +329,18 @@ function Sidebar({
 					</button>
 				</div>
 			</div>
+
+			{showEdit && (
+				<EditProfileOverlay
+					name={profile.name}
+					phone={profile.phone}
+					role="Super Admin"
+					allowPhoto
+					photo={profile.photo}
+					onCancel={() => setShowEdit(false)}
+					onSave={(next) => { setProfile(next); setShowEdit(false); }}
+				/>
+			)}
 		</aside>
 	);
 }
@@ -310,13 +367,6 @@ export default function SuperAdmin({
 				color: "var(--kas-ink)",
 			}}
 		>
-			{/* Phone viewport warning — only visible on small screens */}
-			<div
-				className="fixed inset-0 z-[999] flex-col items-center justify-center px-8 text-center"
-				style={{ background: "var(--kas-paper)", display: "none" }}
-				// Tailwind's `sm:hidden` equivalent via a style tag is not reliable here;
-				// we use a <style> block instead so it survives CSS-in-JS
-			/>
 			<style>{`
 				@media (max-width: 767px) {
 					.sa-phone-wall { display: flex !important; }
@@ -334,46 +384,42 @@ export default function SuperAdmin({
 				<div className="mt-8 px-5 py-2.5" style={{ border: "1px solid var(--kas-line)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--kas-ink-4)" }}>
 					Min. 768px
 				</div>
+				<button
+					onClick={onLogout}
+					className="mt-6"
+					style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-ink)", color: "var(--kas-paper)", padding: "10px 28px", cursor: "pointer", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase" }}
+				>
+					Keluar
+				</button>
 			</div>
 			<div className="sa-main-content h-full grid overflow-hidden" style={{ gridTemplateColumns: "220px 1fr", gridColumn: "1 / -1" }}>
-			<Sidebar
-				view={view}
-				setView={setView}
-				session={sess}
-				onLogout={onLogout}
-			/>
-			<main className="overflow-y-auto">
-				{view.page === "dashboard" && (
-					<Dashboard
-						goProject={(id: string) =>
-							setView({ page: "project", projectId: id })
-						}
-						goProjects={() => setView({ page: "projects" })}
-					/>
-				)}
-				{view.page === "projects" && (
-					<ProjectsList
-						goProject={(id) => setView({ page: "project", projectId: id })}
-					/>
-				)}
-				{view.page === "project" && (
-					<ProjectDetail
-						id={view.projectId!}
-						back={() => setView({ page: "projects" })}
-					/>
-				)}
-				{view.page === "team" && <TeamPage />}
-				{view.page === "billing" && <BillingPage />}
-				{view.page === "material" && <MaterialPage />}
-				{view.page === "finance" && <FinancePage />}
-				{view.page === "timeline" && <TimelinePage />}
-				{view.page === "laporan" && <LaporanPage />}
-				{view.page === "permintaan-material" && <MaterialRequestsPage />}
-				{view.page === "change-order" && <ChangeOrdersPage />}
-				{view.page === "users" && <UsersPage />}
-				{view.page === "contacts" && <ContactsPage />}
-				{view.page === "analytics" && <AnalyticsPage />}
-			</main>
+				<Sidebar view={view} setView={setView} session={sess} onLogout={onLogout} />
+				<main className="overflow-y-auto">
+					{view.page === "dashboard" && (
+						<Dashboard
+							goProject={(id: string) => setView({ page: "project", projectId: id })}
+							goProjects={() => setView({ page: "projects" })}
+						/>
+					)}
+					{view.page === "projects" && (
+						<ProjectsList goProject={(id) => setView({ page: "project", projectId: id })} />
+					)}
+					{view.page === "project" && (
+						<ProjectDetail id={view.projectId!} back={() => setView({ page: "projects" })} />
+					)}
+					{view.page === "team"                && <TeamPage />}
+					{view.page === "billing"             && <BillingPage />}
+					{view.page === "material"            && <MaterialPage />}
+					{view.page === "finance"             && <FinancePage />}
+					{view.page === "timeline"            && <TimelinePage />}
+					{view.page === "laporan"             && <LaporanPage />}
+					{view.page === "permintaan-material" && <MaterialRequestsPage />}
+					{view.page === "change-order"        && <ChangeOrdersPage />}
+					{view.page === "users"               && <UsersPage />}
+					{view.page === "contacts"            && <ContactsPage />}
+					{view.page === "analytics"           && <AnalyticsPage />}
+					{view.page === "notifikasi"          && <NotificationsPage />}
+				</main>
 			</div>
 		</div>
 	);

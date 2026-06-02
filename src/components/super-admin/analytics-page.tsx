@@ -5,7 +5,6 @@ import { FunnelSection } from "./analytics/funnel-section";
 import { AppUsageSection } from "./analytics/app-usage-section";
 import { EmployeeSection } from "./analytics/employee-section";
 import { FeatureSection } from "./analytics/feature-section";
-import { RecommendationsSection } from "./analytics/recommendations-section";
 
 export default function AnalyticsPage() {
 	const d = getMockData();
@@ -128,7 +127,6 @@ export default function AnalyticsPage() {
 				<AppUsageSection d={d} />
 				<EmployeeSection d={d} />
 				<FeatureSection d={d} />
-				<RecommendationsSection d={d} />
 				<Footer />
 			</div>
 		</div>

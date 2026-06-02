@@ -87,7 +87,7 @@ export function getMockData(): AnalyticsData {
 				},
 				{
 					role: "admin",
-					label: "Admin",
+					label: "Administrasi",
 					users: 1,
 					sessions: 9,
 					events: 44,

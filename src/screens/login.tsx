@@ -27,7 +27,6 @@ export default function LoginScreen() {
   const [regName, setRegName]                 = useState("");
   const [regGender, setRegGender]             = useState<Gender | null>(null);
   const [regJabatan, setRegJabatan]           = useState<Jabatan | null>(null);
-  const [regJabatanLainnya, setRegJabatanLainnya] = useState("");
   const [regPhoto, setRegPhoto]               = useState<string | null>(null);
   const [regShake, setRegShake]               = useState(false);
   const [regError, setRegError]               = useState<string | null>(null);
@@ -50,7 +49,7 @@ export default function LoginScreen() {
     setStep("phone");
     setPhone(""); setPin(""); setShake(false); setErrorMsg(null); setRememberMe(false);
     setRegPhone(""); setRegPin(""); setRegRemember(false);
-    setRegName(""); setRegGender(null); setRegJabatan(null); setRegJabatanLainnya("");
+    setRegName(""); setRegGender(null); setRegJabatan(null);
     setRegPhoto(null); setRegShake(false); setRegError(null);
   };
 
@@ -119,7 +118,6 @@ export default function LoginScreen() {
     if (!regName.trim()) { setRegError("Nama tidak boleh kosong."); return; }
     if (!regGender) { setRegError("Pilih jenis kelamin."); return; }
     if (!regJabatan) { setRegError("Pilih jabatan."); return; }
-    if (regJabatan === "Lainnya" && !regJabatanLainnya.trim()) { setRegError("Isi jabatan Anda."); return; }
     setRegError(null);
     startRegTransition(async () => {
       await new Promise((r) => setTimeout(r, 800));
@@ -184,14 +182,12 @@ export default function LoginScreen() {
           name={regName}
           gender={regGender}
           jabatan={regJabatan}
-          jabatanLainnya={regJabatanLainnya}
           errorMsg={regError}
           isPending={regPending}
           onPhotoChange={setRegPhoto}
           onNameChange={(v) => { setRegName(v); setRegError(null); }}
           onGenderChange={(v) => { setRegGender(v); setRegError(null); }}
           onJabatanChange={(v) => { setRegJabatan(v); setRegError(null); }}
-          onJabatanLainnyaChange={(v) => { setRegJabatanLainnya(v); setRegError(null); }}
           onSubmit={handleRegProfileSubmit}
           onBack={() => setStep("reg-pin")}
         />

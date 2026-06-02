@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { WORKERS, PENDING_REGISTRATIONS, type PendingRegistration } from "@/lib/data";
-import { JABATAN_OPTIONS } from "@/components/login/types";
+import { JABATAN_OPTIONS, WORKER_JABATAN, jabatanToRole } from "@/components/login/types";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
@@ -28,10 +28,13 @@ export default function UsersPage() {
 
   const handleActivate = () => {
     if (!completingReg) return;
-    if (!completeJabatan || !completeRate) return;
+    const role = jabatanToRole(completeJabatan);
+    // Daily rate only applies to field workers; Administrasi is salaried.
+    if (!completeJabatan || (role === "worker" && !completeRate)) return;
     setPendingRegs((prev) => prev.filter((r) => r.id !== completingReg.id));
+    const name = completingReg.name.split(" ")[0];
     setCompletingReg(null);
-    setRegToast(`Akun ${completingReg.name.split(" ")[0]} diaktifkan.`);
+    setRegToast(`Akun ${name} diaktifkan sebagai ${role === "admin" ? "Administrasi" : "Pekerja"}.`);
     setTimeout(() => setRegToast(null), 2400);
   };
 
@@ -227,6 +230,16 @@ export default function UsersPage() {
                   <input placeholder={f.ph} className="w-full px-3 py-2.5" style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }} />
                 </div>
               ))}
+              {createRole === "worker" && (
+                <div style={{ gridColumn: "span 2" }}>
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Jabatan</div>
+                  <select defaultValue={WORKER_JABATAN[1] ?? WORKER_JABATAN[0]} className="w-full px-3 py-2.5" style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, cursor: "pointer" }}>
+                    {WORKER_JABATAN.map((j) => (
+                      <option key={j} value={j}>{j}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
             <div className="flex gap-2.5 justify-end mt-5">
               <button onClick={() => setCreateRole(null)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "12px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
@@ -374,19 +387,28 @@ export default function UsersPage() {
                     <option key={j} value={j}>{j}</option>
                   ))}
                 </select>
+                {completeJabatan && (
+                  <div className="mt-2 px-3 py-2" style={{ background: "var(--kas-cobalt-soft)", border: "1px solid var(--kas-cobalt)" }}>
+                    <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--kas-cobalt-ink)" }}>
+                      Akses → {jabatanToRole(completeJabatan) === "admin" ? "Halaman Admin" : "Halaman Pekerja"}
+                    </span>
+                  </div>
+                )}
               </div>
-              <div>
-                <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>
-                  Tarif Harian (Rp) <span style={{ color: "var(--kas-rust)" }}>*</span>
+              {jabatanToRole(completeJabatan) === "worker" && (
+                <div>
+                  <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>
+                    Tarif Harian (Rp) <span style={{ color: "var(--kas-rust)" }}>*</span>
+                  </div>
+                  <input
+                    type="number"
+                    value={completeRate}
+                    onChange={(e) => setCompleteRate(e.target.value)}
+                    placeholder="Contoh: 200000"
+                    style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", boxSizing: "border-box" }}
+                  />
                 </div>
-                <input
-                  type="number"
-                  value={completeRate}
-                  onChange={(e) => setCompleteRate(e.target.value)}
-                  placeholder="Contoh: 200000"
-                  style={{ width: "100%", border: "1px solid var(--kas-ink)", background: "var(--kas-paper-2)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, padding: "10px 12px", outline: "none", boxSizing: "border-box" }}
-                />
-              </div>
+              )}
               <div>
                 <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 4 }}>Kode Akses (di-generate otomatis)</div>
                 <div className="flex items-center gap-3 px-3 py-2.5" style={{ background: "var(--kas-paper-2)", border: "1px solid var(--kas-line)" }}>
@@ -398,13 +420,18 @@ export default function UsersPage() {
 
             <div className="flex gap-2.5 justify-end">
               <button onClick={() => setCompletingReg(null)} style={{ background: "transparent", border: "1px solid var(--kas-ink)", padding: "12px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>
-              <button
-                onClick={handleActivate}
-                disabled={!completeJabatan || !completeRate}
-                style={{ background: !completeJabatan || !completeRate ? "var(--kas-line)" : "var(--kas-ink)", color: "var(--kas-paper)", border: "none", padding: "12px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: !completeJabatan || !completeRate ? "not-allowed" : "pointer" }}
-              >
-                Aktifkan Akun
-              </button>
+              {(() => {
+                const incomplete = !completeJabatan || (jabatanToRole(completeJabatan) === "worker" && !completeRate);
+                return (
+                  <button
+                    onClick={handleActivate}
+                    disabled={incomplete}
+                    style={{ background: incomplete ? "var(--kas-line)" : "var(--kas-ink)", color: "var(--kas-paper)", border: "none", padding: "12px 22px", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: incomplete ? "not-allowed" : "pointer" }}
+                  >
+                    Aktifkan Akun
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>

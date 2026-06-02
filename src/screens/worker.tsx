@@ -7,11 +7,11 @@ import { useInactivityLogout } from "@/hooks/use-inactivity-logout";
 import HomeTab         from "@/components/worker/home/home-tab";
 import MaterialTab     from "@/components/worker/material-tab";
 import ProfileTab      from "@/components/worker/profile-tab";
-import { SelfieCapture } from "@/components/worker/home/clock-section";
 import AMAttend        from "@/components/admin/attend";
 import { LaporanStepper } from "@/components/worker/home/laporan-stepper";
 
-type Session = { id: number; projectId: string; in: string; out: string | null; lemburJam?: number; lemburEndsAt?: number };
+export type LemburType = "malam" | "pagi";
+type Session = { id: number; projectId: string; in: string; out: string | null; lemburType?: LemburType };
 type Tab = "home" | "material" | "tim" | "profile";
 
 function nowStr() {
@@ -58,9 +58,6 @@ export default function WorkerScreen({ session, onLogout }: { session: Account |
   });
   const [snack, setSnack] = useState<string | null>(null);
   const [showLaporanStepper, setShowLaporanStepper] = useState(false);
-  const [showLemburDialog, setShowLemburDialog] = useState(false);
-  const [lemburStep, setLemburStep] = useState<"ask-lembur" | "ask-boss" | "pick-hours">("ask-lembur");
-  const [pendingLemburJam, setPendingLemburJam]   = useState<number | null>(null);
 
   const toast = (msg: string) => {
     setSnack(msg);
@@ -74,55 +71,33 @@ export default function WorkerScreen({ session, onLogout }: { session: Account |
   const doClockOut = () => {
     if (!activeSession) return;
     const proj    = PROJECTS.find((p) => p.id === activeSession.projectId);
-    const isLembur = !!activeSession.lemburEndsAt;
+    const isLembur = !!activeSession.lemburType;
     setState((s) => ({ ...s, sessions: s.sessions.map((x) => x.id === activeSession.id ? { ...x, out: nowStr() } : x) }));
     toast(isLembur ? "Lembur selesai." : `Pulang · ${proj?.address || proj?.name}`);
   };
 
-  const doClockOutAndStartLembur = (jam: number) => {
-    if (!activeSession) return;
-    const pid = activeSession.projectId;
-    setState((s) => ({
-      ...s,
-      sessions: [
-        ...s.sessions.map((x) => x.id === activeSession.id ? { ...x, out: nowStr() } : x),
-        { id: Date.now(), projectId: pid, in: nowStr(), out: null, lemburJam: jam, lemburEndsAt: Date.now() + jam * 3600 * 1000 },
-      ],
-    }));
-    toast(`Lembur ${jam}j dimulai.`);
-  };
-
-  const clockIn = (pid: string, lemburJam?: number) => {
+  const clockIn = (pid: string, lemburType?: LemburType) => {
     if (activeSession) { toast("Pulang dulu dari proyek aktif."); return; }
     const proj = PROJECTS.find((p) => p.id === pid);
-    setState((s) => ({ ...s, sessions: [...s.sessions, { id: Date.now(), projectId: pid, in: nowStr(), out: null, ...(lemburJam ? { lemburJam, lemburEndsAt: Date.now() + lemburJam * 3600 * 1000 } : {}) }] }));
-    toast(lemburJam ? `Lembur ${lemburJam}j dimulai.` : `Masuk · ${proj?.address || proj?.name}`);
+    setState((s) => ({ ...s, sessions: [...s.sessions, { id: Date.now(), projectId: pid, in: nowStr(), out: null, ...(lemburType ? { lemburType } : {}) }] }));
+    toast(
+      lemburType === "malam" ? "Lembur malam dimulai."
+      : lemburType === "pagi" ? "Lembur pagi dimulai."
+      : `Masuk · ${proj?.address || proj?.name}`
+    );
   };
 
+  // Only kepala proyek reaches clock-out (pekerja is read-only).
+  // Clock-out always goes through the laporan (harian + gambar) flow.
   const clockOut = () => {
     if (!activeSession) return;
-    if (isKepalaProyek) {
-      setShowLaporanStepper(true);
-      return;
-    }
-    // Lembur session — just close it, no further questions
-    if (activeSession.lemburEndsAt) {
-      doClockOut();
-      return;
-    }
-    setLemburStep("ask-lembur");
-    setShowLemburDialog(true);
+    setShowLaporanStepper(true);
   };
 
-  const handleLaporanSubmit = (lemburJam: number) => {
+  const handleLaporanSubmit = () => {
     setShowLaporanStepper(false);
-    if (lemburJam > 0) {
-      doClockOutAndStartLembur(lemburJam);
-      toast(`Laporan terkirim. Lembur ${lemburJam}j dimulai.`);
-    } else {
-      doClockOut();
-      toast("Laporan terkirim. Selamat pulang!");
-    }
+    doClockOut();
+    toast("Laporan terkirim. Selamat pulang!");
   };
 
   const markProjectAbsent = (pid: string, reason: string) => {
@@ -142,6 +117,7 @@ export default function WorkerScreen({ session, onLogout }: { session: Account |
           <HomeTab
             myProjects={myProjects}
             me={me}
+            isKepalaProyek={isKepalaProyek}
             state={state}
             setState={setState}
             clockIn={clockIn}
@@ -183,114 +159,6 @@ export default function WorkerScreen({ session, onLogout }: { session: Account |
         );
       })()}
 
-      {showLemburDialog && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 px-5" style={{ background: "rgba(22,28,44,0.5)" }}>
-          <div className="w-full max-w-sm" style={{ background: "var(--kas-paper)", border: "2px solid var(--kas-ink)" }}>
-
-            {lemburStep === "ask-lembur" && (
-              <>
-                <div className="px-6 pt-6 pb-4">
-                  <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 22, fontWeight: 400, lineHeight: 1.2, letterSpacing: "-0.01em" }}>
-                    Apakah ada lembur hari ini?
-                  </div>
-                </div>
-                <div className="grid px-6 pb-6 gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
-                  <button
-                    type="button"
-                    onClick={() => setLemburStep("ask-boss")}
-                    style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
-                  >
-                    Iya
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowLemburDialog(false); doClockOut(); }}
-                    style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", color: "var(--kas-ink-3)", padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
-                  >
-                    Tidak
-                  </button>
-                </div>
-              </>
-            )}
-
-            {lemburStep === "ask-boss" && (
-              <>
-                <div className="px-6 pt-6 pb-4">
-                  <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 22, fontWeight: 400, lineHeight: 1.2, letterSpacing: "-0.01em" }}>
-                    Apakah bos sudah menyetujui lembur?
-                  </div>
-                </div>
-                <div className="grid px-6 pb-6 gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
-                  <button
-                    type="button"
-                    onClick={() => setLemburStep("pick-hours")}
-                    style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
-                  >
-                    Iya
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowLemburDialog(false); doClockOut(); }}
-                    style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", color: "var(--kas-ink-3)", padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}
-                  >
-                    Tidak
-                  </button>
-                </div>
-                <div className="px-6 pb-5">
-                  <button
-                    type="button"
-                    onClick={() => setLemburStep("ask-lembur")}
-                    style={{ border: "none", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", padding: 0 }}
-                  >
-                    ← Kembali
-                  </button>
-                </div>
-              </>
-            )}
-
-            {lemburStep === "pick-hours" && (
-              <>
-                <div className="px-6 pt-6 pb-4">
-                  <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 22, fontWeight: 400, lineHeight: 1.2, letterSpacing: "-0.01em" }}>
-                    Berapa jam lembur?
-                  </div>
-                </div>
-                <div className="grid px-6 pb-4 gap-2" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
-                  {[1, 2, 3, 4, 5].map((h) => (
-                    <button
-                      key={h}
-                      type="button"
-                      onClick={() => { setShowLemburDialog(false); setPendingLemburJam(h); }}
-                      style={{ border: "1px solid var(--kas-ink)", background: "var(--kas-paper)", color: "var(--kas-ink)", padding: "16px 0", fontFamily: "var(--font-newsreader), serif", fontSize: 24, fontWeight: 500, cursor: "pointer", textAlign: "center" }}
-                    >
-                      {h}<span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10 }}>j</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="px-6 pb-5">
-                  <button
-                    type="button"
-                    onClick={() => setLemburStep("ask-boss")}
-                    style={{ border: "none", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", padding: 0 }}
-                  >
-                    ← Kembali
-                  </button>
-                </div>
-              </>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {pendingLemburJam !== null && (
-        <SelfieCapture
-          workerName={me.name}
-          onCapture={() => { const jam = pendingLemburJam; setPendingLemburJam(null); doClockOutAndStartLembur(jam); }}
-          onCancel={() => setPendingLemburJam(null)}
-        />
-      )}
-
       {snack && <Toast message={snack} />}
 
       {showLaporanStepper && (
@@ -299,6 +167,7 @@ export default function WorkerScreen({ session, onLogout }: { session: Account |
           workerName={me.name}
           onSubmit={handleLaporanSubmit}
           onCancel={() => setShowLaporanStepper(false)}
+          activeLemburType={activeSession?.lemburType}
         />
       )}
 

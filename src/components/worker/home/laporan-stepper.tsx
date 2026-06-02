@@ -259,27 +259,23 @@ function UploadIcon({ size = 20 }: { size?: number }) {
   );
 }
 
-const LEMBUR_HOURS_LIST = [1, 2, 3, 4, 5];
-
 export function LaporanStepper({
   project,
   workerName,
   onSubmit,
   onCancel,
+  activeLemburType,
 }: {
   project: Project | undefined;
   workerName: string;
-  onSubmit: (lemburJam: number) => void;
+  onSubmit: () => void;
   onCancel: () => void;
+  activeLemburType?: "malam" | "pagi";
 }) {
-  const [step, setStep]   = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep]   = useState<1 | 2>(1);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [note, setNote]   = useState("");
-
-  // Step 3: lembur
-  const [lemburJam, setLemburJam]     = useState<number | null>(null);
-  const [lemburPhase, setLemburPhase] = useState<"ask-lembur" | "ask-boss" | "pick-hours">("ask-lembur");
-  const [showLemburSelfie, setShowLemburSelfie] = useState(false);
+  const [showSelfie, setShowSelfie] = useState(false);
 
   const uploadRef  = useRef<HTMLInputElement>(null);
   const [showCamera, setShowCamera] = useState(false);
@@ -333,11 +329,11 @@ export function LaporanStepper({
         onCancel={() => setShowCamera(false)}
       />
     )}
-    {showLemburSelfie && (
+    {showSelfie && (
       <SelfieCapture
         workerName={workerName}
-        onCapture={() => { setShowLemburSelfie(false); onSubmit(lemburJam ?? 0); }}
-        onCancel={() => setShowLemburSelfie(false)}
+        onCapture={() => { setShowSelfie(false); onSubmit(); }}
+        onCancel={() => setShowSelfie(false)}
       />
     )}
     <div
@@ -350,16 +346,17 @@ export function LaporanStepper({
           {([
             { s: 1, roman: "I",    label: "Foto"    },
             { s: 2, roman: "II",   label: "Catatan" },
-            { s: 3, roman: "III",  label: "Lembur"  },
-            { s: 4, roman: "IV",   label: "Selfie"  },
-          ] as const).map(({ s, roman, label }) => (
+            { s: 3, roman: "III",  label: "Selfie"  },
+          ] as const).map(({ s, roman, label }) => {
+            const current = showSelfie ? s === 3 : step === s;
+            return (
             <div
               key={s}
               className="flex items-center gap-1.5 px-3 py-1.5"
               style={{
                 border: "1px solid var(--kas-ink)",
-                background: step === s ? "var(--kas-ink)" : "var(--kas-paper)",
-                color:      step === s ? "var(--kas-paper)" : "var(--kas-ink-3)",
+                background: current ? "var(--kas-ink)" : "var(--kas-paper)",
+                color:      current ? "var(--kas-paper)" : "var(--kas-ink-3)",
               }}
             >
               <span style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 14, fontStyle: "italic", lineHeight: 1 }}>
@@ -369,7 +366,8 @@ export function LaporanStepper({
                 {label}
               </span>
             </div>
-          ))}
+            );
+          })}
           <div className="flex-1" />
           <button
             type="button"
@@ -383,10 +381,11 @@ export function LaporanStepper({
         {project && (
           <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", letterSpacing: "0.12em" }}>
             {project.code} · {project.name}
+            {activeLemburType && <span style={{ color: "var(--kas-ochre-ink)", marginLeft: 8 }}>· {activeLemburType === "malam" ? "LEMBUR MALAM" : "LEMBUR PAGI"}</span>}
           </div>
         )}
         <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 24, lineHeight: 1.1, marginTop: 4 }}>
-          {step === 1 ? <>Dokumentasi,<br /><em>proyek hari ini.</em></> : step === 2 ? <>Laporan,<br /><em>harian.</em></> : <>Lembur,<br /><em>hari ini?</em></>}
+          {step === 1 ? <>Dokumentasi,<br /><em>proyek hari ini.</em></> : <>Laporan,<br /><em>harian.</em></>}
         </div>
       </div>
 
@@ -548,92 +547,6 @@ export function LaporanStepper({
         )}
       </div>
 
-      {/* ── STEP 3: Lembur ───────────────────────────────────────────── */}
-      {step === 3 && (
-        <div className="flex-1 overflow-y-auto px-5 pt-5 pb-4">
-
-          {lemburPhase === "ask-lembur" && (
-            <>
-              <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 22, color: "var(--kas-ink)", lineHeight: 1.3, marginBottom: 16 }}>
-                Apakah ada lembur hari ini?
-              </div>
-              <div className="flex flex-col gap-2">
-                <button type="button" onClick={() => setLemburPhase("ask-boss")}
-                  className="w-full py-4"
-                  style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
-                  Iya
-                </button>
-                <button type="button" onClick={() => { setLemburJam(0); setLemburPhase("ask-lembur"); }}
-                  className="w-full py-4"
-                  style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", color: "var(--kas-ink-3)", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
-                  Tidak
-                </button>
-              </div>
-              {lemburJam === 0 && (
-                <div className="mt-3 px-3 py-2" style={{ background: "var(--kas-paper-2)", border: "1px solid var(--kas-line)" }}>
-                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-3)", letterSpacing: "0.1em" }}>Tidak ada lembur — siap kirim laporan</span>
-                </div>
-              )}
-            </>
-          )}
-
-          {lemburPhase === "ask-boss" && (
-            <>
-              <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 22, color: "var(--kas-ink)", lineHeight: 1.3, marginBottom: 16 }}>
-                Apakah bos sudah menyetujui lembur?
-              </div>
-              <div className="flex flex-col gap-2">
-                <button type="button" onClick={() => setLemburPhase("pick-hours")}
-                  className="w-full py-4"
-                  style={{ border: "none", background: "var(--kas-ink)", color: "var(--kas-paper)", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
-                  Iya
-                </button>
-                <button type="button" onClick={() => { setLemburJam(0); setLemburPhase("ask-lembur"); }}
-                  className="w-full py-4"
-                  style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", color: "var(--kas-ink-3)", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer" }}>
-                  Tidak
-                </button>
-              </div>
-              <button type="button" onClick={() => setLemburPhase("ask-lembur")}
-                style={{ marginTop: 10, border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0" }}>
-                ← Kembali
-              </button>
-            </>
-          )}
-
-          {lemburPhase === "pick-hours" && (
-            <>
-              <div className="mb-3 px-3 py-2" style={{ background: "var(--kas-moss-soft)", border: "1px solid var(--kas-moss)" }}>
-                <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-moss-ink)", letterSpacing: "0.12em", textTransform: "uppercase" }}>✓ Disetujui bos</span>
-              </div>
-              <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 8, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--kas-ink-3)", marginBottom: 10 }}>
-                Berapa jam lembur?
-              </div>
-              <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
-                {LEMBUR_HOURS_LIST.map((h) => (
-                  <button key={h} type="button" onClick={() => setLemburJam(h)}
-                    style={{ border: `1px solid ${lemburJam === h ? "var(--kas-ochre)" : "var(--kas-line)"}`, background: lemburJam === h ? "var(--kas-ochre)" : "var(--kas-paper)", padding: "16px 0", fontFamily: "var(--font-newsreader), serif", fontSize: 24, fontWeight: 500, cursor: "pointer", textAlign: "center" }}>
-                    {h}<span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10 }}>j</span>
-                  </button>
-                ))}
-              </div>
-              {lemburJam !== null && lemburJam > 0 && (
-                <div className="mt-4 px-4 py-3" style={{ background: "var(--kas-ochre-soft)", border: "1px solid var(--kas-ochre)" }}>
-                  <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, color: "var(--kas-ochre-ink)" }}>
-                    Lembur <em>{lemburJam} jam</em>
-                  </div>
-                </div>
-              )}
-              <button type="button" onClick={() => { setLemburPhase("ask-boss"); setLemburJam(null); }}
-                style={{ marginTop: 10, border: "none", background: "transparent", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--kas-ink-3)", cursor: "pointer", padding: "4px 0" }}>
-                ← Kembali
-              </button>
-            </>
-          )}
-
-        </div>
-      )}
-
       {/* ── Footer actions ────────────────────────────────────────────────── */}
       <div className="px-5 pb-6 pt-3 flex flex-col gap-2" style={{ borderTop: "1px solid var(--kas-line)" }}>
         {step === 1 ? (
@@ -653,11 +566,11 @@ export function LaporanStepper({
           >
             {totalPhotos > 0 ? `Lanjut dengan ${totalPhotos} foto →` : "Lanjut tanpa foto →"}
           </button>
-        ) : step === 2 ? (
+        ) : (
           <>
             <button
               type="button"
-              onClick={() => { if (note.trim()) setStep(3); }}
+              onClick={() => { if (note.trim()) setShowSelfie(true); }}
               className="w-full py-4"
               style={{
                 border: "none",
@@ -669,7 +582,7 @@ export function LaporanStepper({
                 cursor: note.trim() ? "pointer" : "default",
               }}
             >
-              Lanjut →
+              Lanjut · Selfie & Kirim →
             </button>
             <button
               type="button"
@@ -678,35 +591,6 @@ export function LaporanStepper({
               style={{ border: "none", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}
             >
               ← Kembali ke Foto
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={() => { if (lemburJam !== null) setShowLemburSelfie(true); }}
-              className="w-full py-4"
-              style={{
-                border: "none",
-                background: lemburJam !== null ? "var(--kas-ink)" : "var(--kas-line)",
-                color: lemburJam !== null ? "var(--kas-paper)" : "var(--kas-ink-3)",
-                fontFamily: "var(--font-manrope), sans-serif",
-                fontSize: 13, fontWeight: 600,
-                letterSpacing: "0.06em", textTransform: "uppercase",
-                cursor: lemburJam !== null ? "pointer" : "default",
-              }}
-            >
-              {lemburJam !== null && lemburJam > 0
-                ? `Lanjut · Selfie Lembur ${lemburJam}j →`
-                : "Lanjut · Selfie & Kirim →"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              className="w-full py-2"
-              style={{ border: "none", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer" }}
-            >
-              ← Kembali ke Catatan
             </button>
           </>
         )}

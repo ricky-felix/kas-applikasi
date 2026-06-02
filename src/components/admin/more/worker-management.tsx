@@ -5,8 +5,9 @@ import {
   payrollTotal, fmtIDRshort, fmtIDR,
   type CashAdvance, type DailyAllowance,
 } from "@/lib/data";
-import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
+import { Kicker, DisplayHeading } from "@/components/primitives";
 import { BossConfirmDialog } from "@/components/admin/boss-confirm";
+import { WORKER_JABATAN } from "@/components/login/types";
 
 type WorkerDetail = { wid: string } | null;
 
@@ -18,6 +19,7 @@ export default function AMWorkerManagement({ onBack, toast }: { onBack: () => vo
   const [newPhone, setNewPhone]   = useState("");
   const [newPin, setNewPin]       = useState("");
   const [newRate, setNewRate]     = useState("");
+  const [newJabatan, setNewJabatan] = useState<string>(WORKER_JABATAN[1] ?? WORKER_JABATAN[0]);
 
   // Ledger state — keyed by workerId
   const [paid, setPaid]           = useState<Set<string>>(new Set());
@@ -42,9 +44,10 @@ export default function AMWorkerManagement({ onBack, toast }: { onBack: () => vo
 
   const handleCreate = () => {
     if (!newName.trim() || !newPhone.trim() || !newPin.trim()) { toast("Isi semua kolom wajib."); return; }
-    toast(`Akun ${newName.trim().split(" ")[0]} dibuat.`);
+    toast(`Akun ${newName.trim().split(" ")[0]} (${newJabatan}) dibuat.`);
     setShowCreate(false);
     setNewName(""); setNewPhone(""); setNewPin(""); setNewRate("");
+    setNewJabatan(WORKER_JABATAN[1] ?? WORKER_JABATAN[0]);
   };
 
   const handleAddKasbon = (wid: string) => {
@@ -314,12 +317,24 @@ export default function AMWorkerManagement({ onBack, toast }: { onBack: () => vo
               { ph: "Nama lengkap *",         val: newName,  set: setNewName,  type: "text"   },
               { ph: "Nomor HP (08xx) *",      val: newPhone, set: setNewPhone, type: "tel"    },
               { ph: "Kode akses 6 karakter *",val: newPin,   set: setNewPin,   type: "text"   },
-              { ph: "Tarif harian (Rp)",       val: newRate,  set: setNewRate,  type: "number" },
             ].map((f, i) => (
               <input key={i} type={f.type} value={f.val} onChange={(e) => f.set(e.target.value)} placeholder={f.ph}
                 className="w-full px-3 py-2.5"
                 style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, outline: "none" }} />
             ))}
+            <select
+              value={newJabatan}
+              onChange={(e) => setNewJabatan(e.target.value)}
+              className="w-full px-3 py-2.5"
+              style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, outline: "none", cursor: "pointer" }}
+            >
+              {WORKER_JABATAN.map((j) => (
+                <option key={j} value={j}>{j}</option>
+              ))}
+            </select>
+            <input type="number" value={newRate} onChange={(e) => setNewRate(e.target.value)} placeholder="Tarif harian (Rp)"
+              className="w-full px-3 py-2.5"
+              style={{ border: "1px solid var(--kas-line)", background: "var(--kas-paper)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, outline: "none" }} />
           </div>
           <div className="grid gap-2 mt-3" style={{ gridTemplateColumns: "1fr 1fr" }}>
             <button onClick={() => setShowCreate(false)} style={{ border: "1px solid var(--kas-line)", background: "transparent", padding: "10px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", cursor: "pointer" }}>Batal</button>

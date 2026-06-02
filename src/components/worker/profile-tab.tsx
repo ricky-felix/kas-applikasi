@@ -3,6 +3,7 @@ import { useState } from "react";
 import { WORKERS, PROJECTS, ACCOUNTS, TODAY_SHORT } from "@/lib/data";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 import HistoryTab from "@/components/worker/history-tab";
+import { EditProfileOverlay } from "@/components/profile/edit-profile";
 
 type View = "profile" | "kontak-tim" | "riwayat";
 
@@ -40,9 +41,13 @@ export default function ProfileTab({
   onLogout: () => void;
 }) {
   const [view, setView] = useState<View>("profile");
+  const [showEdit, setShowEdit] = useState(false);
+  const [profile, setProfile] = useState({ name: me.name, phone: me.phone });
 
   const adminAccount = ACCOUNTS.find((a) => a.role === "admin");
   const adminPhone = adminAccount?.phone ?? "";
+  const ownerAccount = ACCOUNTS.find((a) => a.role === "owner");
+  const ownerPhone = ownerAccount?.phone ?? "";
 
   if (view === "kontak-tim") {
     const myProjects = PROJECTS.filter((p) => p.assigned.includes(me.id));
@@ -134,7 +139,7 @@ export default function ProfileTab({
     <div className="px-5 pt-4 pb-6">
       <Kicker no="01" label="AKUN ANDA" />
       <DisplayHeading size={28}>
-        Profil,<br /><em>{me.name.split(" ").slice(-1)[0]}.</em>
+        Profil,<br /><em>{profile.name.split(" ").slice(-1)[0]}.</em>
       </DisplayHeading>
 
       <div className="mt-4 flex items-center gap-3.5 px-4 py-4" style={{ background: "var(--kas-paper-2)", border: "1px solid var(--kas-line)" }}>
@@ -145,14 +150,14 @@ export default function ProfileTab({
           {me.short}
         </div>
         <div className="flex-1">
-          <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.1 }}>{me.name}</div>
+          <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 20, lineHeight: 1.1 }}>{profile.name}</div>
           <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", marginTop: 4, letterSpacing: "0.1em" }}>{me.role}</div>
         </div>
       </div>
 
       <div className="mt-4" style={{ borderTop: "1px solid var(--kas-line)" }}>
         {[
-          { l: "Nomor HP", v: me.phone },
+          { l: "Nomor HP", v: profile.phone },
           { l: "Peran",    v: me.isKepalaProyek ? `${me.role} · Kepala Proyek` : me.role },
         ].map((r, i) => (
           <div key={i} className="grid gap-3 py-3" style={{ gridTemplateColumns: "110px 1fr", borderBottom: "1px solid var(--kas-line-2)" }}>
@@ -160,6 +165,16 @@ export default function ProfileTab({
             <span style={{ fontFamily: "var(--font-manrope), sans-serif", fontSize: 13 }}>{r.v}</span>
           </div>
         ))}
+
+        <button
+          type="button"
+          onClick={() => setShowEdit(true)}
+          className="w-full flex items-center justify-between py-3"
+          style={{ border: "none", borderBottom: "1px solid var(--kas-line-2)", background: "transparent", cursor: "pointer", textAlign: "left" }}
+        >
+          <MonoLabel size={10}>Edit Profil</MonoLabel>
+          <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)" }}>→</span>
+        </button>
 
         {me.isKepalaProyek && (
           <button
@@ -184,6 +199,15 @@ export default function ProfileTab({
       </div>
 
       <div className="mt-4 flex flex-col gap-2">
+        {ownerPhone && (
+          <a
+            href={`tel:${ownerPhone}`}
+            className="w-full py-3.5 grid place-items-center"
+            style={{ border: "1px solid var(--kas-ink)", background: "transparent", color: "var(--kas-ink)", fontFamily: "var(--font-manrope), sans-serif", fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", textDecoration: "none" }}
+          >
+            Hubungi Owner
+          </a>
+        )}
         {adminPhone && (
           <a
             href={`tel:${adminPhone}`}
@@ -205,6 +229,16 @@ export default function ProfileTab({
       <div className="mt-5 text-center" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, color: "var(--kas-ink-4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
         Tauke v0.1 · {TODAY_SHORT}
       </div>
+
+      {showEdit && (
+        <EditProfileOverlay
+          name={profile.name}
+          phone={profile.phone}
+          role={me.isKepalaProyek ? `${me.role} · Kepala Proyek` : me.role}
+          onCancel={() => setShowEdit(false)}
+          onSave={({ name, phone }) => { setProfile({ name, phone }); setShowEdit(false); }}
+        />
+      )}
     </div>
   );
 }

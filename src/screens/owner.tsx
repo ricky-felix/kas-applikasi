@@ -20,6 +20,7 @@ import {
 	MobileTopBar,
 } from "@/components/primitives";
 import OwnerFinanceSheet from "@/components/owner/finance-sheet";
+import { EditProfileOverlay } from "@/components/profile/edit-profile";
 import { MetricCard } from "@/components/owner/metric-card";
 import { ProyekSheet } from "@/components/owner/sheets/proyek-sheet";
 import { BayarSheet } from "@/components/owner/sheets/bayar-sheet";
@@ -39,6 +40,9 @@ export default function OwnerDashboard({
 	onLogout: () => void;
 }) {
 	const [sheet, setSheet] = useState<Sheet>(null);
+	const [showEdit, setShowEdit] = useState(false);
+	const [profile, setProfile] = useState<{ name: string; phone: string; photo: string | null }>({ name: session?.name ?? "Owner", phone: session?.phone ?? "", photo: null });
+	const ownerInitials = profile.name.trim().split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "O";
 
 	const activeProjects = PROJECTS.filter((p) => p.status === "Active");
 	const outstandingTotal = PROJECTS.reduce(
@@ -119,23 +123,50 @@ export default function OwnerDashboard({
 			className="h-full flex flex-col relative overflow-hidden"
 			style={{ background: "var(--kas-paper)", color: "var(--kas-ink)" }}
 		>
-			<MobileTopBar tabLabel={`${session?.name ?? "Owner"} · OWNER`}>
-				<button
-					onClick={onLogout}
-					style={{
-						border: "1px solid var(--kas-line)",
-						background: "transparent",
-						fontFamily: "var(--font-jetbrains), monospace",
-						fontSize: 9,
-						letterSpacing: "0.16em",
-						textTransform: "uppercase",
-						color: "var(--kas-ink-3)",
-						cursor: "pointer",
-						padding: "4px 8px",
-					}}
-				>
-					Keluar
-				</button>
+			<MobileTopBar tabLabel={`${profile.name} · OWNER`}>
+				<div className="flex items-center gap-1.5">
+					<button
+						onClick={() => setShowEdit(true)}
+						className="grid place-items-center"
+						aria-label="Edit profil"
+						style={{
+							width: 28,
+							height: 28,
+							border: "1px solid var(--kas-line)",
+							background: "var(--kas-paper-2)",
+							color: "var(--kas-ink)",
+							fontFamily: "var(--font-newsreader), serif",
+							fontSize: 12,
+							fontWeight: 600,
+							cursor: "pointer",
+							overflow: "hidden",
+							padding: 0,
+						}}
+					>
+						{profile.photo ? (
+							// eslint-disable-next-line @next/next/no-img-element
+							<img src={profile.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+						) : (
+							ownerInitials
+						)}
+					</button>
+					<button
+						onClick={onLogout}
+						style={{
+							border: "1px solid var(--kas-line)",
+							background: "transparent",
+							fontFamily: "var(--font-jetbrains), monospace",
+							fontSize: 9,
+							letterSpacing: "0.16em",
+							textTransform: "uppercase",
+							color: "var(--kas-ink-3)",
+							cursor: "pointer",
+							padding: "4px 8px",
+						}}
+					>
+						Keluar
+					</button>
+				</div>
 			</MobileTopBar>
 
 			<div className="flex-1 overflow-y-auto">
@@ -271,6 +302,18 @@ export default function OwnerDashboard({
 						</div>
 					</div>
 				</>
+			)}
+
+			{showEdit && (
+				<EditProfileOverlay
+					name={profile.name}
+					phone={profile.phone}
+					role="Owner · Pemilik"
+					allowPhoto
+					photo={profile.photo}
+					onCancel={() => setShowEdit(false)}
+					onSave={(next) => { setProfile(next); setShowEdit(false); }}
+				/>
 			)}
 		</div>
 	);

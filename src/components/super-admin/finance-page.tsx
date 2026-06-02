@@ -46,6 +46,9 @@ export default function FinancePage() {
   const [customOpen, setCustomOpen] = useState(false);
   const customRef = useRef<HTMLDivElement>(null);
   const [paidWorkers, setPaidWorkers] = useState<Set<string>>(new Set());
+  const [expenseCat, setExpenseCat]   = useState<"all" | "Material" | "Transport" | "Upah" | "Lain-lain">("all");
+  type Section = "arus-kas" | "pengeluaran" | "penggajian" | "kasbon";
+  const [section, setSection] = useState<Section>("arus-kas");
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -80,6 +83,8 @@ export default function FinancePage() {
   const totalOut        = filteredCashflow.filter((e) => e.type === "out").reduce((s, e) => s + e.amount, 0);
   const totalPayroll    = PAYROLL_MAY.reduce((s, e) => s + payrollTotal(e), 0);
   const totalExpenses   = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+  const visibleExpenses = expenseCat === "all" ? filteredExpenses : filteredExpenses.filter((e) => e.category === expenseCat);
+  const visibleExpTotal = visibleExpenses.reduce((s, e) => s + e.amount, 0);
   const totalKasbon     = CASH_ADVANCES.reduce((s, ca) => s + ca.amount, 0);
   const totalAllowances = DAILY_ALLOWANCES.reduce((s, da) => s + da.amount, 0);
 
@@ -124,22 +129,59 @@ export default function FinancePage() {
       <TopBar title="Keuangan" />
       <SectionHead no="06" kicker="MEI 2026">Arus kas, <em>terpantau.</em></SectionHead>
 
-      <div className="grid mb-6" style={{ gridTemplateColumns: "repeat(4, 1fr)", borderTop: "1px solid var(--kas-ink)", borderBottom: "1px solid var(--kas-ink)" }}>
-        {[
-          { l: "Pemasukan",    v: fmtIDRshort(totalIn),            color: "var(--kas-moss)",  accent: "var(--kas-moss)" },
-          { l: "Pengeluaran",  v: fmtIDRshort(totalOut),           color: "var(--kas-rust)",  accent: "var(--kas-rust)" },
-          { l: "Penggajian",   v: fmtIDRshort(totalPayroll),       color: "var(--kas-ochre)", accent: "var(--kas-ochre)" },
-          { l: "Saldo Bersih", v: fmtIDRshort(totalIn - totalOut), color: totalIn - totalOut >= 0 ? "var(--kas-moss)" : "var(--kas-rust)", accent: "var(--kas-cobalt)" },
-        ].map((s, i) => (
-          <div key={i} className="p-5" style={{ borderRight: i < 3 ? "1px solid var(--kas-line)" : "none", borderTop: `3px solid ${s.accent}` }}>
+      <div className="grid mb-0" style={{ gridTemplateColumns: "repeat(4, 1fr)", borderTop: "1px solid var(--kas-ink)", borderBottom: "1px solid var(--kas-ink)" }}>
+        {([
+          { l: "Pemasukan",    v: fmtIDRshort(totalIn),            color: "var(--kas-moss)",  accent: "var(--kas-moss)",   sec: "arus-kas"   },
+          { l: "Pengeluaran",  v: fmtIDRshort(totalOut),           color: "var(--kas-rust)",  accent: "var(--kas-rust)",   sec: "pengeluaran" },
+          { l: "Penggajian",   v: fmtIDRshort(totalPayroll),       color: "var(--kas-ochre)", accent: "var(--kas-ochre)",  sec: "penggajian"  },
+          { l: "Saldo Bersih", v: fmtIDRshort(totalIn - totalOut), color: totalIn - totalOut >= 0 ? "var(--kas-moss)" : "var(--kas-rust)", accent: "var(--kas-cobalt)", sec: "arus-kas" },
+        ] as const).map((s, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setSection(s.sec as Section)}
+            className="p-5 text-left"
+            style={{ border: "none", borderRight: i < 3 ? "1px solid var(--kas-line)" : "none", borderTop: `3px solid ${section === s.sec ? s.accent : "transparent"}`, background: section === s.sec ? "var(--kas-paper-2)" : "transparent", cursor: "pointer" }}
+          >
             <MonoLabel size={10}>{s.l}</MonoLabel>
             <div style={{ fontFamily: "var(--font-newsreader), serif", fontWeight: 500, fontSize: 32, lineHeight: 1.0, marginTop: 8, letterSpacing: "-0.02em", color: s.color }}>{s.v}</div>
-          </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Section tab bar */}
+      <div className="flex mb-8" style={{ borderBottom: "1px solid var(--kas-ink)", marginTop: 0 }}>
+        {([
+          { k: "arus-kas",    l: "Arus Kas"          },
+          { k: "pengeluaran", l: "Log Pengeluaran"    },
+          { k: "penggajian",  l: "Penggajian"         },
+          { k: "kasbon",      l: "Kasbon & Tunjangan" },
+        ] as const).map((t) => (
+          <button
+            key={t.k}
+            onClick={() => setSection(t.k)}
+            style={{
+              border: "none",
+              borderBottom: section === t.k ? "2px solid var(--kas-ink)" : "2px solid transparent",
+              background: "transparent",
+              color: section === t.k ? "var(--kas-ink)" : "var(--kas-ink-3)",
+              padding: "12px 20px",
+              cursor: "pointer",
+              fontFamily: "var(--font-jetbrains), monospace",
+              fontSize: 10,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              fontWeight: section === t.k ? 700 : 400,
+              marginBottom: -1,
+            }}
+          >
+            {t.l}
+          </button>
         ))}
       </div>
 
       {/* Arus Kas */}
-      <div className="mb-10">
+      {section === "arus-kas" && <div className="mb-10">
         <div className="flex items-center justify-between mb-0" style={{ borderTop: "1px solid var(--kas-ink)", paddingTop: 14, paddingBottom: 14 }}>
           <MonoLabel size={10}>Arus Kas</MonoLabel>
           {rangeFilter}
@@ -173,34 +215,70 @@ export default function FinancePage() {
             </tr>
           </tfoot>
         </table>
-      </div>
+      </div>}
 
       {/* Log Pengeluaran */}
-      <div className="mb-10">
-        <div style={{ borderTop: "1px solid var(--kas-ink)", paddingTop: 14, paddingBottom: 14 }}>
+      {section === "pengeluaran" && <div className="mb-10">
+        <div className="flex items-center justify-between" style={{ borderTop: "1px solid var(--kas-ink)", paddingTop: 14, paddingBottom: 14 }}>
           <MonoLabel size={10}>Log Pengeluaran</MonoLabel>
+          <div className="flex gap-1.5 flex-wrap">
+            {(["all", "Material", "Transport", "Upah", "Lain-lain"] as const).map((cat) => {
+              const count  = cat === "all" ? filteredExpenses.length : filteredExpenses.filter((e) => e.category === cat).length;
+              const active = expenseCat === cat;
+              const catColor: Record<string, string> = { all: "var(--kas-ink)", Material: "var(--kas-cobalt-soft)", Transport: "var(--kas-ochre-soft)", Upah: "var(--kas-moss-soft)", "Lain-lain": "var(--kas-paper-2)" };
+              const catInk:  Record<string, string>  = { all: "var(--kas-paper)", Material: "var(--kas-cobalt-ink)", Transport: "var(--kas-ochre-ink)", Upah: "var(--kas-moss-ink)", "Lain-lain": "var(--kas-ink-3)" };
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setExpenseCat(cat)}
+                  style={{
+                    border: `1px solid ${active ? "var(--kas-ink)" : "var(--kas-line)"}`,
+                    background: active ? (cat === "all" ? "var(--kas-ink)" : catColor[cat]) : "transparent",
+                    color: active ? (cat === "all" ? "var(--kas-paper)" : catInk[cat]) : "var(--kas-ink-3)",
+                    padding: "5px 12px",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-jetbrains), monospace",
+                    fontSize: 9,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {cat === "all" ? "Semua" : cat}
+                  {count > 0 && <span style={{ marginLeft: 5, opacity: 0.6 }}>· {count}</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--kas-ink-3)", borderBottom: "1px solid var(--kas-ink)" }}>
               <th style={{ textAlign: "left", padding: "10px 0", width: 80 }}>Tanggal</th>
               <th style={{ textAlign: "left", padding: "10px 14px" }}>Keterangan</th>
-              <th style={{ textAlign: "left", padding: "10px 14px" }}>Kategori</th>
+              {expenseCat === "all" && <th style={{ textAlign: "left", padding: "10px 14px" }}>Kategori</th>}
               <th style={{ textAlign: "left", padding: "10px 14px" }}>Oleh</th>
               <th style={{ textAlign: "right", padding: "10px 0 10px 14px" }}>Jumlah</th>
             </tr>
           </thead>
           <tbody>
-            {filteredExpenses.map((e) => {
+            {visibleExpenses.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ padding: "24px 0", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-4)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+                  Tidak ada pengeluaran dalam periode ini.
+                </td>
+              </tr>
+            ) : visibleExpenses.map((e) => {
               const catColor: Record<string, string> = { Material: "var(--kas-cobalt-soft)", Transport: "var(--kas-ochre-soft)", Upah: "var(--kas-moss-soft)", "Lain-lain": "var(--kas-paper-2)" };
               const catInk: Record<string, string>   = { Material: "var(--kas-cobalt-ink)",  Transport: "var(--kas-ochre-ink)",  Upah: "var(--kas-moss-ink)",  "Lain-lain": "var(--kas-ink-3)" };
               return (
                 <tr key={e.id} style={{ borderBottom: "1px solid var(--kas-line)" }}>
                   <td style={{ padding: "14px 0", fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--kas-ink-3)" }}>{e.date}</td>
                   <td style={{ padding: "14px", fontFamily: "var(--font-newsreader), serif", fontSize: 16 }}>{e.description}</td>
-                  <td style={{ padding: "14px" }}>
-                    <span style={{ padding: "3px 9px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", background: catColor[e.category], color: catInk[e.category] }}>{e.category}</span>
-                  </td>
+                  {expenseCat === "all" && (
+                    <td style={{ padding: "14px" }}>
+                      <span style={{ padding: "3px 9px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", background: catColor[e.category], color: catInk[e.category] }}>{e.category}</span>
+                    </td>
+                  )}
                   <td style={{ padding: "14px", fontFamily: "var(--font-jetbrains), monospace", fontSize: 11, color: "var(--kas-ink-3)" }}>{e.by}</td>
                   <td style={{ padding: "14px 0 14px 14px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13, color: "var(--kas-rust)" }}>{`-${fmtIDR(e.amount)}`}</td>
                 </tr>
@@ -209,15 +287,22 @@ export default function FinancePage() {
           </tbody>
           <tfoot>
             <tr style={{ borderTop: "1px solid var(--kas-ink)" }}>
-              <td colSpan={4} style={{ padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Total Pengeluaran</td>
-              <td style={{ padding: "14px 0 14px 14px", textAlign: "right", fontFamily: "var(--font-newsreader), serif", fontSize: 22, color: "var(--kas-rust)" }}>{`-${fmtIDR(totalExpenses)}`}</td>
+              <td colSpan={expenseCat === "all" ? 4 : 3} style={{ padding: "14px 0", fontFamily: "var(--font-manrope), sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                {expenseCat === "all" ? "Total Pengeluaran" : `Total · ${expenseCat}`}
+                {expenseCat !== "all" && (
+                  <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, fontWeight: 400, color: "var(--kas-ink-3)", marginLeft: 10, letterSpacing: "0.1em" }}>
+                    dari {fmtIDR(totalExpenses)} keseluruhan
+                  </span>
+                )}
+              </td>
+              <td style={{ padding: "14px 0 14px 14px", textAlign: "right", fontFamily: "var(--font-newsreader), serif", fontSize: 22, color: "var(--kas-rust)" }}>{`-${fmtIDR(visibleExpTotal)}`}</td>
             </tr>
           </tfoot>
         </table>
-      </div>
+      </div>}
 
       {/* Penggajian */}
-      <div>
+      {section === "penggajian" && <div>
         <div style={{ borderTop: "1px solid var(--kas-ink)", paddingTop: 14, paddingBottom: 14 }}>
           <MonoLabel size={10}>Penggajian Mei 2026</MonoLabel>
         </div>
@@ -274,10 +359,10 @@ export default function FinancePage() {
             </tr>
           </tfoot>
         </table>
-      </div>
+      </div>}
 
       {/* Kasbon & Tunjangan Harian */}
-      <div className="mt-10">
+      {section === "kasbon" && <div>
         <div style={{ borderTop: "1px solid var(--kas-ink)", paddingTop: 14, paddingBottom: 14 }}>
           <div className="flex items-baseline justify-between">
             <MonoLabel size={10}>Kasbon &amp; Tunjangan Harian Mei 2026</MonoLabel>
@@ -328,7 +413,7 @@ export default function FinancePage() {
             </tr>
           </tfoot>
         </table>
-      </div>
+      </div>}
 
       <Footer />
     </div>

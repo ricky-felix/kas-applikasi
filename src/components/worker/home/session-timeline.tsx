@@ -1,7 +1,9 @@
 import { PROJECTS } from "@/lib/data";
 import { Kicker, MonoLabel } from "@/components/primitives";
 
-type Session = { id: number; projectId: string; in: string; out: string | null; lemburJam?: number; lemburEndsAt?: number };
+type Session = { id: number; projectId: string; in: string; out: string | null; lemburType?: "malam" | "pagi" };
+
+const LEMBUR_LABEL = { malam: "Lembur Malam", pagi: "Lembur Pagi" } as const;
 
 const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
 
@@ -23,8 +25,8 @@ export function SessionTimeline({
   sessions: Session[];
   activeSession: Session | undefined;
 }) {
-  const totalWorkMin   = sessions.reduce((s, x) => s + sessionMinutes(x.in, x.out), 0);
-  const totalLemburMin = sessions.reduce((s, x) => s + (x.lemburJam ? x.lemburJam * 60 : 0), 0);
+  const totalWorkMin   = sessions.filter((s) => !s.lemburType).reduce((s, x) => s + sessionMinutes(x.in, x.out), 0);
+  const totalLemburMin = sessions.filter((s) => s.lemburType).reduce((s, x) => s + sessionMinutes(x.in, x.out), 0);
 
   const closedSessions = sessions.filter((s) => s.out !== null).sort((a, b) => toMin(a.in) - toMin(b.in));
   const timeline: TimelineEntry[] = closedSessions.map((s, idx) => ({ kind: "session", s, idx }));
@@ -51,7 +53,7 @@ export function SessionTimeline({
                   <div style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, color: "var(--kas-ink-3)", marginTop: 2, letterSpacing: "0.08em" }}>
                     {s.in} — {s.out ?? "berjalan"}
                     {live && <span style={{ color: "var(--kas-cobalt)", marginLeft: 6 }}>● LIVE</span>}
-                    {s.lemburJam && <span style={{ color: "var(--kas-ochre)", marginLeft: 6 }}>LEMBUR {s.lemburJam}J</span>}
+                    {s.lemburType && <span style={{ color: "var(--kas-ochre)", marginLeft: 6 }}>{LEMBUR_LABEL[s.lemburType].toUpperCase()}</span>}
                   </div>
                 </div>
                 <span style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 12, color: live ? "var(--kas-cobalt)" : "var(--kas-ink)", fontWeight: 500 }}>

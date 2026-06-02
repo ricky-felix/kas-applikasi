@@ -1,10 +1,16 @@
 "use client";
 import { useState } from "react";
 import { WORKERS, fmtIDR, type Project } from "@/lib/data";
-import { MonoLabel } from "@/components/primitives";
 import { SectionHead } from "../shared";
 
-const STATUSES = ["Hadir","Hadir","Setengah Hari","Tidak Hadir","Hadir","Hadir"];
+const STATUSES = ["Hadir","Izin","Setengah Hari","Tidak Hadir","Hadir","Hadir"];
+
+const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
+  "Hadir":         { bg: "var(--kas-cobalt-soft)", fg: "var(--kas-cobalt-ink)" },
+  "Setengah Hari": { bg: "var(--kas-ochre-soft)",  fg: "var(--kas-ochre-ink)" },
+  "Izin":          { bg: "var(--kas-moss-soft)",   fg: "var(--kas-moss-ink)" },
+};
+const statusStyle = (s: string) => STATUS_STYLE[s] ?? { bg: "var(--kas-paper-2)", fg: "var(--kas-ink-3)" };
 
 export function TeamTab({ p }: { p: Project }) {
   const assigned = WORKERS.filter((w) => p.assigned.includes(w.id));
@@ -46,7 +52,7 @@ export function TeamTab({ p }: { p: Project }) {
                 </td>
                 <td style={{ padding: "16px 14px", color: "var(--kas-ink-2)" }}>{w.role}</td>
                 <td style={{ padding: "16px 14px" }}>
-                  <span className="px-2 py-1" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", background: status === "Hadir" ? "var(--kas-cobalt-soft)" : status === "Setengah Hari" ? "var(--kas-ochre-soft)" : "var(--kas-paper-2)", color: status === "Hadir" ? "var(--kas-cobalt-ink)" : status === "Setengah Hari" ? "var(--kas-ochre-ink)" : "var(--kas-ink-3)" }}>{status}</span>
+                  <span className="px-2 py-1" style={{ fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", background: statusStyle(status).bg, color: statusStyle(status).fg }}>{status}</span>
                 </td>
                 <td style={{ padding: "16px 14px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>{fmtIDR(w.rate)}</td>
                 <td style={{ padding: "16px 14px", textAlign: "right", fontFamily: "var(--font-jetbrains), monospace", fontSize: 13 }}>{days}</td>
