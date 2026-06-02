@@ -48,28 +48,41 @@ function Bracket({ pos }: { pos: "tl"|"tr"|"bl"|"br" }) {
 
 type PermStatus = "pending" | "granted" | "denied";
 
-// ── Face detection (lazy-loaded BlazeFace from CDN) ─────────────────────────
+// ── Face detection (bundled BlazeFace + TF.js WebGL backend) ────────────────
+// Models are imported lazily so TF.js is only pulled into the bundle when the
+// selfie screen actually mounts (it's a large dependency).
 type FaceStatus = "loading" | "searching" | "detected" | "unavailable";
-const TFJS_URL      = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js";
-const BLAZEFACE_URL = "https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.1.0/dist/blazeface.min.js";
 
-function loadScriptOnce(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[data-src="${src}"]`);
-    if (existing) {
-      if (existing.dataset.loaded === "true") { resolve(); return; }
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("script error")));
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = src;
-    s.async = true;
-    s.dataset.src = src;
-    s.addEventListener("load", () => { s.dataset.loaded = "true"; resolve(); });
-    s.addEventListener("error", () => reject(new Error("script error")));
-    document.head.appendChild(s);
-  });
+// A face must clear this confidence before it counts, and it must hold for a
+// few consecutive frames — this stops a single noisy frame (or a face-like
+// pattern on a wall) from falsely unlocking the shutter.
+const FACE_MIN_PROBABILITY = 0.9;
+const FACE_CONFIRM_FRAMES  = 2;
+
+type BlazeFaceModel = {
+  estimateFaces: (
+    input: HTMLVideoElement,
+    returnTensors?: boolean,
+  ) => Promise<{ probability?: number | number[] }[]>;
+};
+
+async function loadFaceModel(): Promise<BlazeFaceModel> {
+  const [tf, blazeface] = await Promise.all([
+    import("@tensorflow/tfjs-core"),
+    import("@tensorflow-models/blazeface"),
+  ]);
+  // Registers the WebGL backend as a side effect.
+  await import("@tensorflow/tfjs-backend-webgl");
+  await tf.ready();
+  return blazeface.load() as unknown as Promise<BlazeFaceModel>;
+}
+
+// BlazeFace reports `probability` as either a number or a 1-element array
+// depending on version/return mode — normalise to a plain number.
+function faceProbability(face: { probability?: number | number[] }): number {
+  const p = face.probability;
+  if (Array.isArray(p)) return p[0] ?? 0;
+  return typeof p === "number" ? p : 0;
 }
 
 export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName: string; onCapture: () => void; onCancel: () => void }) {
@@ -89,8 +102,9 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
   const mountedRef    = useRef(true);
   const watchIdRef    = useRef<number | null>(null);
   const gpsTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const faceModelRef  = useRef<{ estimateFaces: (input: HTMLVideoElement, returnTensors: boolean) => Promise<unknown[]> } | null>(null);
+  const faceModelRef  = useRef<BlazeFaceModel | null>(null);
   const faceTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const faceHitsRef   = useRef(0);
 
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -265,11 +279,13 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
     return () => clearInterval(id);
   }, [phase]);
 
-  // Load BlazeFace from CDN and continuously check for a face in the frame.
-  // If the model can't be loaded (offline / CDN blocked), fall back to
-  // "unavailable" so the selfie isn't hard-blocked.
+  // Load BlazeFace and continuously check for a real face in the live frame.
+  // A face only counts once it clears FACE_MIN_PROBABILITY for several
+  // consecutive frames. If the model genuinely can't initialise (e.g. no WebGL
+  // support), fall back to "unavailable" so the selfie isn't hard-blocked.
   useEffect(() => {
     let cancelled = false;
+    let inferring = false;
     const stopLoop = () => {
       if (faceTimerRef.current) { clearInterval(faceTimerRef.current); faceTimerRef.current = null; }
     };
@@ -277,28 +293,31 @@ export function SelfieCapture({ workerName, onCapture, onCancel }: { workerName:
     // If the model can't load/initialise in time, stop blocking the selfie.
     const fallbackTimer = setTimeout(() => {
       if (!cancelled) setFaceStatus((s) => (s === "loading" ? "unavailable" : s));
-    }, 12000);
+    }, 15000);
 
     (async () => {
       try {
-        await loadScriptOnce(TFJS_URL);
-        await loadScriptOnce(BLAZEFACE_URL);
-        const blazeface = (window as unknown as { blazeface?: { load: () => Promise<typeof faceModelRef.current> } }).blazeface;
-        if (!blazeface) throw new Error("blazeface global missing");
-        const model = await blazeface.load();
+        const model = await loadFaceModel();
         if (cancelled) return;
         faceModelRef.current = model;
+        faceHitsRef.current = 0;
         setFaceStatus("searching");
 
         faceTimerRef.current = setInterval(async () => {
           const v = videoRef.current;
           const m = faceModelRef.current;
-          if (!v || !m || v.readyState < 2) return;
+          if (!v || !m || v.readyState < 2 || inferring) return;
+          inferring = true;
           try {
             const faces = await m.estimateFaces(v, false);
-            if (!cancelled) setFaceStatus(faces.length > 0 ? "detected" : "searching");
+            const hasFace = faces.some((f) => faceProbability(f) >= FACE_MIN_PROBABILITY);
+            faceHitsRef.current = hasFace ? faceHitsRef.current + 1 : 0;
+            if (!cancelled) {
+              setFaceStatus(faceHitsRef.current >= FACE_CONFIRM_FRAMES ? "detected" : "searching");
+            }
           } catch { /* transient inference error — keep last status */ }
-        }, 500);
+          finally { inferring = false; }
+        }, 400);
       } catch {
         if (!cancelled) setFaceStatus("unavailable");
       }
