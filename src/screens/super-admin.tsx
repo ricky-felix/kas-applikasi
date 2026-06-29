@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Account, MATERIALS, MATERIAL_REQUESTS, CHANGE_ORDERS } from "@/lib/data";
+import { Account } from "@/lib/data";
+import { useMaterials, useMaterialRequests, useChangeOrders } from "@/lib/stores";
 import { KasBrandMark } from "@/components/primitives";
 import { EditProfileOverlay } from "@/components/profile/edit-profile";
 import Dashboard from "@/components/super-admin/dashboard";
@@ -18,12 +19,6 @@ import MaterialRequestsPage from "@/components/super-admin/material-requests-pag
 import ChangeOrdersPage from "@/components/super-admin/change-orders-page";
 import ContactsPage from "@/components/super-admin/contacts-page";
 import NotificationsPage from "@/components/super-admin/notifications-page";
-
-// Badge count for the sidebar — operational items that need action
-const NOTIF_COUNT =
-	MATERIALS.filter((m) => m.stock < m.minStock).length +
-	MATERIAL_REQUESTS.filter((r) => r.status === "Pending").length +
-	CHANGE_ORDERS.filter((c) => c.status === "Menunggu").length;
 
 type Page =
 	| "dashboard"
@@ -55,6 +50,15 @@ function Sidebar({
 }) {
 	const [showEdit, setShowEdit] = useState(false);
 	const [profile, setProfile] = useState<{ name: string; phone: string; photo: string | null }>({ name: session.name, phone: session.phone ?? "", photo: null });
+
+	// Badge count for the sidebar — operational items that need action
+	const materials = useMaterials();
+	const materialRequests = useMaterialRequests();
+	const changeOrders = useChangeOrders();
+	const NOTIF_COUNT =
+		materials.filter((m) => m.stock < m.minStock).length +
+		materialRequests.filter((r) => r.status === "Pending").length +
+		changeOrders.filter((c) => c.status === "Menunggu").length;
 	const GROUPS = [
 		{
 			label: "Operasional",

@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
-  WORKERS, PAYROLL_MAY, CASH_ADVANCES, DAILY_ALLOWANCES,
   payrollTotal, fmtIDRshort, fmtIDR,
   type CashAdvance, type DailyAllowance,
 } from "@/lib/data";
+import { useWorkers, useCashAdvances, useDailyAllowances, usePayroll } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 import { WORKER_JABATAN } from "@/components/login/types";
@@ -21,11 +21,32 @@ export default function AMWorkerManagement({ onBack, toast }: { onBack: () => vo
   const [newRate, setNewRate]     = useState("");
   const [newJabatan, setNewJabatan] = useState<string>(WORKER_JABATAN[1] ?? WORKER_JABATAN[0]);
 
+  const WORKERS = useWorkers();
+  const PAYROLL_MAY = usePayroll();
+  const liveAdvances = useCashAdvances();
+  const liveAllowances = useDailyAllowances();
+
   // Ledger state — keyed by workerId
   const [paid, setPaid]           = useState<Set<string>>(new Set());
   const [confirmPay, setConfirmPay] = useState<string | null>(null);
-  const [advances, setAdvances]   = useState<CashAdvance[]>(CASH_ADVANCES);
-  const [allowances, setAllowances] = useState<DailyAllowance[]>(DAILY_ALLOWANCES);
+  const [advances, setAdvances]   = useState<CashAdvance[]>([]);
+  const [allowances, setAllowances] = useState<DailyAllowance[]>([]);
+
+  // Seed editable ledgers once from the live data when it first arrives.
+  const advSeeded = useRef(false);
+  useEffect(() => {
+    if (!advSeeded.current && liveAdvances.length) {
+      setAdvances(liveAdvances);
+      advSeeded.current = true;
+    }
+  }, [liveAdvances]);
+  const allowSeeded = useRef(false);
+  useEffect(() => {
+    if (!allowSeeded.current && liveAllowances.length) {
+      setAllowances(liveAllowances);
+      allowSeeded.current = true;
+    }
+  }, [liveAllowances]);
 
   // Add kasbon form
   const [addKasbon, setAddKasbon] = useState<string | null>(null);

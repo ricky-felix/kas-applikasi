@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { WORKERS, fmtIDRshort, type Project } from "@/lib/data";
+import { fmtIDRshort, type Project } from "@/lib/data";
 import { useProjects, addProject, nextProjectCode } from "@/lib/projects-store";
+import { useWorkers } from "@/lib/stores";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 const CATEGORIES = [
@@ -34,6 +35,7 @@ type StatusFilter = "all" | Project["status"];
 
 export default function AMProjects({ toast }: { toast: (m: string) => void }) {
   const allProjects                   = useProjects();
+  const WORKERS                       = useWorkers();
   const [newIds, setNewIds]           = useState<Set<string>>(new Set());
   const [showForm, setShowForm]       = useState(false);
   const [form, setForm]               = useState<NewProject>(EMPTY_FORM);

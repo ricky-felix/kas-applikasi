@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { WORK_REPORTS, PROJECTS } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkReports } from "@/lib/stores";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 const PHASES = ["Sebelum", "Sedang", "Sesudah"] as const;
@@ -21,6 +22,8 @@ const PHASE_BG: Record<string, string> = {
 };
 
 export default function AMLaporan() {
+  const PROJECTS = useProjects();
+  const WORK_REPORTS = useWorkReports();
   const [filterProject, setFilterProject] = useState("all");
 
   const projects = PROJECTS.filter((p) =>

@@ -1,11 +1,14 @@
 "use client";
 import { useState } from "react";
-import { WORKERS, PENDING_REGISTRATIONS, type PendingRegistration } from "@/lib/data";
+import { type PendingRegistration } from "@/lib/data";
+import { useWorkers, usePendingRegistrations } from "@/lib/stores";
 import { JABATAN_OPTIONS, WORKER_JABATAN, jabatanToRole } from "@/components/login/types";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
 export default function UsersPage() {
+  const WORKERS = useWorkers();
+  const PENDING_REGISTRATIONS = usePendingRegistrations();
   const [createRole, setCreateRole] = useState<string | null>(null);
   const [resetInfo, setResetInfo] = useState<{ idx: number; code: string } | null>(null);
   const [editingUser, setEditingUser] = useState<{ name: string; phone: string; role: string; short: string; since: string } | null>(null);

@@ -1,15 +1,25 @@
 "use client";
-import { useState } from "react";
-import { MATERIALS, type Material } from "@/lib/data";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { type Material } from "@/lib/data";
+import { useMaterials } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 
 type ModalState = "none" | "add" | "refill";
 
 const UNITS = ["kg", "ltr", "pcs", "m²", "m", "set", "roll", "sak"];
-const SUPPLIERS = Array.from(new Set(MATERIALS.map((m) => m.supplier)));
 
 export function MaterialTab() {
+  const MATERIALS = useMaterials();
+  const SUPPLIERS = useMemo(() => Array.from(new Set(MATERIALS.map((m) => m.supplier))), [MATERIALS]);
   const [materials, setMaterials] = useState<Material[]>(MATERIALS);
+  // Seed local editable state from live materials once they hydrate.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seeded.current && MATERIALS.length > 0) {
+      setMaterials(MATERIALS);
+      seeded.current = true;
+    }
+  }, [MATERIALS]);
   const [modal, setModal]         = useState<ModalState>("none");
 
   // Add new material form

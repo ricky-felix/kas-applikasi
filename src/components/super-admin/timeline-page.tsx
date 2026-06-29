@@ -1,12 +1,11 @@
 "use client";
 import { useState } from "react";
 import {
-	PROJECTS,
-	WORKERS,
-	WORK_REPORTS,
-	CHANGE_ORDERS,
 	fmtIDRshort,
+	type Project,
 } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkers, useWorkReports, useChangeOrders } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
@@ -63,7 +62,7 @@ const BAR_COLOR: Record<string, string> = {
 	Overdue: "var(--kas-rust)",
 };
 
-function getProjectState(p: (typeof PROJECTS)[0]) {
+function getProjectState(p: Project) {
 	const end = parseDate(p.endEst);
 	if (p.status === "Completed") return "Completed";
 	if (end && end < TODAY && p.progress < 100) return "Overdue";
@@ -81,6 +80,10 @@ const ALL_STATUSES = [
 type BarStatus = (typeof ALL_STATUSES)[number];
 
 export default function TimelinePage() {
+	const PROJECTS = useProjects();
+	const WORKERS = useWorkers();
+	const WORK_REPORTS = useWorkReports();
+	const CHANGE_ORDERS = useChangeOrders();
 	const [coStatuses, setCoStatuses] = useState<Record<string, string>>(() =>
 		Object.fromEntries(CHANGE_ORDERS.map((c) => [c.id, c.status])),
 	);

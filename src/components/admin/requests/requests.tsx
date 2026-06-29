@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
-import { MATERIAL_REQUESTS, CHANGE_ORDERS, PROJECTS, fmtIDRshort } from "@/lib/data";
+import { useEffect, useRef, useState } from "react";
+import { fmtIDRshort } from "@/lib/data";
 import type { MaterialRequest, ChangeOrder } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useMaterialRequests, useChangeOrders } from "@/lib/stores";
 import { Kicker } from "@/components/primitives";
 import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 
@@ -35,6 +37,7 @@ function TypeChip({ label }: { label: string }) {
 }
 
 function MaterialCard({ req, onApprove, onReject }: { req: MaterialRequest; onApprove: () => void; onReject: () => void }) {
+  const PROJECTS = useProjects();
   const project = PROJECTS.find(p => p.id === req.projectId);
   return (
     <div className="py-4" style={{ borderBottom: "1px solid var(--kas-line)" }}>
@@ -64,6 +67,7 @@ function MaterialCard({ req, onApprove, onReject }: { req: MaterialRequest; onAp
 }
 
 function ChangeOrderCard({ co, onApprove, onReject }: { co: ChangeOrder; onApprove: () => void; onReject: () => void }) {
+  const PROJECTS = useProjects();
   const project = PROJECTS.find(p => p.id === co.projectId);
   return (
     <div className="py-4" style={{ borderBottom: "1px solid var(--kas-line)" }}>
@@ -120,8 +124,25 @@ function DoneRow({ label, sub, status, kind }: { label: string; sub: string; sta
 }
 
 export default function AMRequests({ toast }: { toast: (m: string) => void }) {
+  const MATERIAL_REQUESTS = useMaterialRequests();
+  const CHANGE_ORDERS     = useChangeOrders();
   const [matReqs, setMatReqs] = useState(MATERIAL_REQUESTS);
   const [cos, setCos]         = useState(CHANGE_ORDERS);
+  // Seed local editable lists from live data once they hydrate.
+  const seededMat = useRef(false);
+  const seededCo  = useRef(false);
+  useEffect(() => {
+    if (!seededMat.current && MATERIAL_REQUESTS.length > 0) {
+      setMatReqs(MATERIAL_REQUESTS);
+      seededMat.current = true;
+    }
+  }, [MATERIAL_REQUESTS]);
+  useEffect(() => {
+    if (!seededCo.current && CHANGE_ORDERS.length > 0) {
+      setCos(CHANGE_ORDERS);
+      seededCo.current = true;
+    }
+  }, [CHANGE_ORDERS]);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
 
   function resolve(c: Confirm) {

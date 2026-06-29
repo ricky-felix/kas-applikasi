@@ -1,18 +1,20 @@
 "use client";
 import { useState } from "react";
 import {
-	PROJECTS,
-	WORKERS,
-	MATERIALS,
-	CASHFLOW_MAY,
-	MATERIAL_REQUESTS,
-	CHANGE_ORDERS,
-	PENDING_REGISTRATIONS,
-	WORK_REPORTS,
 	TODAY_SHORT,
 	fmtIDRshort,
 	type Account,
 } from "@/lib/data";
+import {
+	useWorkers,
+	useMaterials,
+	useCashFlow,
+	useMaterialRequests,
+	useChangeOrders,
+	usePendingRegistrations,
+	useWorkReports,
+} from "@/lib/stores";
+import { useProjects } from "@/lib/projects-store";
 import {
 	Kicker,
 	DisplayHeading,
@@ -39,6 +41,14 @@ export default function OwnerDashboard({
 	session: Account | null;
 	onLogout: () => void;
 }) {
+	const PROJECTS = useProjects();
+	const WORKERS = useWorkers();
+	const MATERIALS = useMaterials();
+	const CASHFLOW_MAY = useCashFlow();
+	const MATERIAL_REQUESTS = useMaterialRequests();
+	const CHANGE_ORDERS = useChangeOrders();
+	const PENDING_REGISTRATIONS = usePendingRegistrations();
+	const WORK_REPORTS = useWorkReports();
 	const [sheet, setSheet] = useState<Sheet>(null);
 	const [showEdit, setShowEdit] = useState(false);
 	const [profile, setProfile] = useState<{ name: string; phone: string; photo: string | null }>({ name: session?.name ?? "Owner", phone: session?.phone ?? "", photo: null });

@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
-import { WORKERS, PROJECTS, ACCOUNTS, TODAY_SHORT } from "@/lib/data";
+import { ACCOUNTS, TODAY_SHORT, type Worker } from "@/lib/data";
+import { useWorkers } from "@/lib/stores";
+import { useProjects } from "@/lib/projects-store";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 import HistoryTab from "@/components/worker/history-tab";
 import { EditProfileOverlay } from "@/components/profile/edit-profile";
@@ -37,9 +39,11 @@ export default function ProfileTab({
   me,
   onLogout,
 }: {
-  me: typeof WORKERS[0];
+  me: Worker;
   onLogout: () => void;
 }) {
+  const WORKERS = useWorkers();
+  const PROJECTS = useProjects();
   const [view, setView] = useState<View>("profile");
   const [showEdit, setShowEdit] = useState(false);
   const [profile, setProfile] = useState({ name: me.name, phone: me.phone });

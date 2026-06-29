@@ -1,8 +1,9 @@
 "use client";
-import { MATERIALS } from "@/lib/data";
+import { useMaterials } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 
 export default function AMMaterial({ onBack }: { onBack: () => void }) {
+  const MATERIALS = useMaterials();
   const lowCount = MATERIALS.filter((m) => m.stock <= m.minStock).length;
   return (
     <div className="px-5 pt-4 pb-6">

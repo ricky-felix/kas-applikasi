@@ -1,16 +1,15 @@
 "use client";
-import {
-	PROJECTS,
-	WORKERS,
-	MATERIAL_REQUESTS,
-	CHANGE_ORDERS,
-	TODAY,
-	fmtIDRshort,
-} from "@/lib/data";
+import { TODAY, fmtIDRshort } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkers, useMaterialRequests, useChangeOrders } from "@/lib/stores";
 import { Kicker, MonoLabel } from "@/components/primitives";
 
 
 export default function AMHome() {
+	const PROJECTS = useProjects();
+	const WORKERS = useWorkers();
+	const MATERIAL_REQUESTS = useMaterialRequests();
+	const CHANGE_ORDERS = useChangeOrders();
 	const active = PROJECTS.filter((p) => p.status === "Active");
 	const outstanding = PROJECTS.reduce(
 		(s, p) => s + (p.contractValue - p.paid),

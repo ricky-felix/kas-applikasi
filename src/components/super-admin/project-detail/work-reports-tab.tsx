@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
-import { WORK_REPORTS, MATERIAL_REQUESTS } from "@/lib/data";
+import { useWorkReports, useMaterialRequests } from "@/lib/stores";
 import { SectionHead } from "../shared";
 
 export function WorkReportsTab({ projectId }: { projectId: string }) {
+  const WORK_REPORTS = useWorkReports();
+  const MATERIAL_REQUESTS = useMaterialRequests();
   const reports  = WORK_REPORTS.filter((r) => r.projectId === projectId);
   const requests = MATERIAL_REQUESTS.filter((r) => r.projectId === projectId);
   const [reqStatuses, setReqStatuses] = useState<Record<string, "Pending" | "Disetujui" | "Ditolak">>(() =>

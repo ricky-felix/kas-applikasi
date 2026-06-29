@@ -1,11 +1,10 @@
 "use client";
 import { useState } from "react";
 import {
-	MATERIAL_REQUESTS,
-	CHANGE_ORDERS,
-	PROJECTS,
 	fmtIDRshort,
 } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useMaterialRequests, useChangeOrders } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
@@ -13,6 +12,9 @@ type MatStatus = "Pending" | "Disetujui" | "Ditolak";
 type CoStatus = "Menunggu" | "Disetujui" | "Ditolak";
 
 export default function PermintaanPage() {
+	const MATERIAL_REQUESTS = useMaterialRequests();
+	const CHANGE_ORDERS = useChangeOrders();
+	const PROJECTS = useProjects();
 	const [matFilter, setMatFilter] = useState<MatStatus | "all">("all");
 	const [matStatuses, setMatStatuses] = useState<Record<string, MatStatus>>(
 		() => Object.fromEntries(MATERIAL_REQUESTS.map((r) => [r.id, r.status])),

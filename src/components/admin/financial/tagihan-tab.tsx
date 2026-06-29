@@ -1,6 +1,8 @@
 "use client";
-import { useState } from "react";
-import { PROJECTS, PROOF_SUBMISSIONS, fmtIDR, fmtIDRshort, type ProofSubmission } from "@/lib/data";
+import { useEffect, useRef, useState } from "react";
+import { fmtIDR, fmtIDRshort, type ProofSubmission } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useProofSubmissions } from "@/lib/stores";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 
@@ -23,11 +25,21 @@ function deriveStages(contractValue: number, paid: number) {
 }
 
 export function TagihanTab({ toast }: { toast: (m: string) => void }) {
+  const PROJECTS = useProjects();
+  const PROOF_SUBMISSIONS = useProofSubmissions();
   const outstanding = PROJECTS.filter((p) => p.contractValue > p.paid);
   const total = outstanding.reduce((s, p) => s + (p.contractValue - p.paid), 0);
 
   const [approved, setApproved]   = useState<Set<string>>(new Set());
   const [proofs, setProofs]       = useState<ProofSubmission[]>(PROOF_SUBMISSIONS);
+  // Seed local proof inbox from live proof submissions once they hydrate.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seeded.current && PROOF_SUBMISSIONS.length > 0) {
+      setProofs(PROOF_SUBMISSIONS);
+      seeded.current = true;
+    }
+  }, [PROOF_SUBMISSIONS]);
   const [openProofId, setOpenProofId] = useState<string | null>(null);
   const [confirmStage, setConfirmStage] = useState<{ pid: string; idx: number } | null>(null);
   const [confirmProof, setConfirmProof] = useState<ProofSubmission | null>(null);

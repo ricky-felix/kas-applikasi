@@ -1,4 +1,4 @@
-import { PROJECTS } from "@/lib/data";
+import type { Project } from "@/lib/data";
 import { Kicker, MonoLabel } from "@/components/primitives";
 
 type Session = { id: number; projectId: string; in: string; out: string | null };
@@ -21,7 +21,7 @@ export function ProjectSelector({
   absentProjects,
   onSelect,
 }: {
-  projects: typeof PROJECTS;
+  projects: Project[];
   sessions: Session[];
   selectedProjectId: string;
   activeSession: Session | undefined;

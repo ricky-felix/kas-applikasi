@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, PROOF_SUBMISSIONS, fmtIDR, fmtIDRshort, type ProofSubmission } from "@/lib/data";
+import { fmtIDR, fmtIDRshort, type ProofSubmission, type Project } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useProofSubmissions } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer, WAIcon } from "./shared";
 
@@ -31,7 +33,7 @@ function FileIcon() {
 }
 
 function LogEntry({ ps, project, open, onToggle, onApprove, onReject }: {
-  ps: ProofSubmission; project: typeof PROJECTS[0];
+  ps: ProofSubmission; project: Project;
   open: boolean; onToggle: () => void; onApprove: () => void; onReject: () => void;
 }) {
   const time = ps.submittedAt.split(", ")[1] ?? ps.submittedAt;
@@ -74,7 +76,7 @@ function LogEntry({ ps, project, open, onToggle, onApprove, onReject }: {
 
 // ── Inline stage tab panel ───────────────────────────────────────────────────
 function StageTabs({ project, pendingStages, proofsByStage, onApprove, onReject }: {
-  project: typeof PROJECTS[0];
+  project: Project;
   pendingStages: { idx: number; label: string; amount: number }[];
   proofsByStage: Record<number, ProofSubmission>;
   onApprove: (ps: ProofSubmission) => void;
@@ -174,6 +176,8 @@ function StageTabs({ project, pendingStages, proofsByStage, onApprove, onReject 
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function BillingPage() {
+  const PROJECTS = useProjects();
+  const PROOF_SUBMISSIONS = useProofSubmissions();
   const total       = PROJECTS.reduce((s, p) => s + p.contractValue, 0);
   const paid        = PROJECTS.reduce((s, p) => s + p.paid, 0);
   const outstanding = total - paid;

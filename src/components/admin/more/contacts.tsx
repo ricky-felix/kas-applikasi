@@ -1,5 +1,6 @@
 "use client";
-import { WORKERS, PROJECTS } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkers } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 
 function WAButton({ phone }: { phone: string }) {
@@ -64,6 +65,8 @@ function ContactRow({ name, sub, phone }: { name: string; sub: string; phone: st
 }
 
 export default function AMContacts({ onBack }: { onBack: () => void }) {
+  const WORKERS = useWorkers();
+  const PROJECTS = useProjects();
   const activeProjects = PROJECTS.filter((p) => p.status === "Active");
 
   const uniqueClients = (() => {

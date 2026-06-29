@@ -1,12 +1,15 @@
 "use client";
 import { useState } from "react";
-import { MATERIAL_REQUESTS, PROJECTS } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useMaterialRequests } from "@/lib/stores";
 import { TopBar, SectionHead, Footer } from "./shared";
 
 type MatStatus = "Pending" | "Disetujui" | "Ditolak";
 type Confirm = { id: string; action: "Disetujui" | "Ditolak"; label: string } | null;
 
 export default function MaterialRequestsPage() {
+  const MATERIAL_REQUESTS = useMaterialRequests();
+  const PROJECTS = useProjects();
   const [matFilter, setMatFilter] = useState<MatStatus | "all">("all");
   const [matStatuses, setMatStatuses] = useState<Record<string, MatStatus>>(
     () => Object.fromEntries(MATERIAL_REQUESTS.map((r) => [r.id, r.status]))

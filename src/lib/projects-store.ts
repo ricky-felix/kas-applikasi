@@ -1,41 +1,28 @@
 "use client";
-import { useSyncExternalStore } from "react";
-import { PROJECTS, type Project } from "./data";
+import { type Project } from "./data";
+import { projectsStore } from "./stores";
 
-// Shared client-side project store so projects created in the Admin (mobile)
-// interface and the Super Admin (desktop) interface are visible in both.
-// Seeded from the static demo data; new projects are prepended.
-let projects: Project[] = [...PROJECTS];
-const listeners = new Set<() => void>();
-
-function emit() {
-  for (const l of listeners) l();
-}
+// Shared client-side project store. Backed by the generic hydrating store in
+// ./stores (which fetches live projects from the backend). Kept as its own
+// module for the create-project helpers used by the Admin UI.
 
 export function addProject(p: Project) {
-  projects = [p, ...projects];
-  emit();
+	projectsStore.prepend(p);
 }
 
 export function getProjects(): Project[] {
-  return projects;
+	return projectsStore.get();
 }
 
 export function nextProjectCode(): string {
-  const max = projects.reduce((n, p) => {
-    const m = p.code.match(/KAS-\d{4}-(\d+)/);
-    return m ? Math.max(n, parseInt(m[1])) : n;
-  }, 0);
-  return `KAS-2026-${String(max + 1).padStart(3, "0")}`;
+	const max = projectsStore.get().reduce((n, p) => {
+		const m = p.code.match(/KAS-\d{4}-(\d+)/);
+		return m ? Math.max(n, parseInt(m[1])) : n;
+	}, 0);
+	return `KAS-2026-${String(max + 1).padStart(3, "0")}`;
 }
 
 export function useProjects(): Project[] {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => listeners.delete(cb);
-    },
-    () => projects,
-    () => projects,
-  );
+	return projectsStore.use();
 }
+s;

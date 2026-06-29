@@ -1,5 +1,6 @@
+"use client";
 import type { Project } from "@/lib/data";
-import { WORKERS } from "@/lib/data";
+import { useWorkers } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 
 const MONTH_MAP: Record<string, number> = {
@@ -31,6 +32,7 @@ function deadlineInfo(start: string, endEst: string) {
 }
 
 export function ProyekSheet({ projects }: { projects: Project[] }) {
+  const WORKERS = useWorkers();
   return (
     <div className="mt-4">
       {projects.map((p, i) => {

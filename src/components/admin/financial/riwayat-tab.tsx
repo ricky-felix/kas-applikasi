@@ -1,6 +1,7 @@
 "use client";
 import { Fragment, useState } from "react";
-import { CASHFLOW_MAY, fmtIDRshort } from "@/lib/data";
+import { fmtIDRshort } from "@/lib/data";
+import { useCashFlow } from "@/lib/stores";
 
 type Tab = "semua" | "pendapatan" | "pengeluaran";
 
@@ -35,6 +36,7 @@ const CHIPS = [
 ];
 
 export function RiwayatTab() {
+  const CASHFLOW_MAY = useCashFlow();
   const [tab, setTab]         = useState<Tab>("semua");
   const [dateFrom, setFrom]   = useState(toInputDate(new Date(TODAY.getTime() - 29 * 86400000)));
   const [dateTo, setTo]       = useState(toInputDate(TODAY));

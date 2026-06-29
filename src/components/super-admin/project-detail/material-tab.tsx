@@ -1,8 +1,10 @@
-import { MATERIALS } from "@/lib/data";
+"use client";
+import { useMaterials } from "@/lib/stores";
 import { MonoLabel, ProgressBar } from "@/components/primitives";
 import { SectionHead } from "../shared";
 
 export function MaterialTab() {
+  const MATERIALS = useMaterials();
   return (
     <div>
       <SectionHead no="01" kicker="DIPAKAI VS DIANGGARKAN">Material, <em>terpakai.</em></SectionHead>

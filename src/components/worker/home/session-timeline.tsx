@@ -1,4 +1,5 @@
-import { PROJECTS } from "@/lib/data";
+"use client";
+import { useProjects } from "@/lib/projects-store";
 import { Kicker, MonoLabel } from "@/components/primitives";
 
 type Session = { id: number; projectId: string; in: string; out: string | null; lemburType?: "malam" | "pagi" };
@@ -25,6 +26,7 @@ export function SessionTimeline({
   sessions: Session[];
   activeSession: Session | undefined;
 }) {
+  const PROJECTS = useProjects();
   const totalWorkMin   = sessions.filter((s) => !s.lemburType).reduce((s, x) => s + sessionMinutes(x.in, x.out), 0);
   const totalLemburMin = sessions.filter((s) => s.lemburType).reduce((s, x) => s + sessionMinutes(x.in, x.out), 0);
 

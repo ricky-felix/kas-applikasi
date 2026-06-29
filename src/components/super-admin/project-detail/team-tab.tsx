@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { WORKERS, fmtIDR, type Project } from "@/lib/data";
+import { fmtIDR, type Project } from "@/lib/data";
+import { useWorkers } from "@/lib/stores";
 import { SectionHead } from "../shared";
 
 const STATUSES = ["Hadir","Izin","Setengah Hari","Tidak Hadir","Hadir","Hadir"];
@@ -13,6 +14,7 @@ const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
 const statusStyle = (s: string) => STATUS_STYLE[s] ?? { bg: "var(--kas-paper-2)", fg: "var(--kas-ink-3)" };
 
 export function TeamTab({ p }: { p: Project }) {
+  const WORKERS = useWorkers();
   const assigned = WORKERS.filter((w) => p.assigned.includes(w.id));
   const [payingWorkerId, setPayingWorkerId] = useState<string | null>(null);
   const [paidSet, setPaidSet] = useState<Set<string>>(new Set());

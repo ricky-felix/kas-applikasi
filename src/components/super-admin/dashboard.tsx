@@ -1,5 +1,7 @@
 "use client";
-import { PROJECTS, WORKERS, EXPENSES, CASHFLOW_MAY, PAYROLL_MAY, MATERIALS, TODAY_SHORT, fmtIDR, fmtIDRshort, payrollTotal } from "@/lib/data";
+import { TODAY_SHORT, fmtIDR, fmtIDRshort, payrollTotal } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkers, useExpenses, usePayroll } from "@/lib/stores";
 import { TopBar, SectionHead, Footer } from "./shared";
 import { StatsGrid } from "./dashboard/stats-grid";
 import { ActiveProjects } from "./dashboard/active-projects";
@@ -10,6 +12,10 @@ import { WorkerEfficiency } from "./dashboard/worker-efficiency";
 import { MaterialCards } from "./dashboard/material-cards";
 
 export default function Dashboard({ goProject, goProjects }: { goProject: (id: string) => void; goProjects: () => void }) {
+  const PROJECTS = useProjects();
+  const WORKERS  = useWorkers();
+  const EXPENSES = useExpenses();
+  const PAYROLL_MAY = usePayroll();
   const active        = PROJECTS.filter((p) => p.status === "Active");
   const outstanding   = PROJECTS.reduce((s, p) => s + (p.contractValue - p.paid), 0);
   const workersOnSite = WORKERS.filter((w) => active.some((p) => p.assigned.includes(w.id))).length;

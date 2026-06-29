@@ -1,8 +1,11 @@
 "use client";
-import { WORK_REPORTS, PROJECTS } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkReports } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 
 export default function AMWorkReports({ onBack, toast }: { onBack: () => void; toast: (m: string) => void }) {
+  const WORK_REPORTS = useWorkReports();
+  const PROJECTS = useProjects();
   return (
     <div className="px-5 pt-4 pb-6">
       <button onClick={onBack} style={{ border: "none", background: "transparent", color: "var(--kas-ink-3)", fontFamily: "var(--font-jetbrains), monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", cursor: "pointer", padding: "0 0 10px" }}>← Kembali</button>

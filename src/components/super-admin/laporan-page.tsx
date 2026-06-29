@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { WORK_REPORTS, PROJECTS, WORKERS } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkReports, useWorkers } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
@@ -19,6 +20,9 @@ function distributePhotos(total: number): Record<string, number> {
 }
 
 export default function LaporanPage() {
+  const PROJECTS = useProjects();
+  const WORK_REPORTS = useWorkReports();
+  const WORKERS = useWorkers();
   const [projFilter, setProjFilter] = useState("all");
   const [workerFilter, setWorkerFilter] = useState("all");
 

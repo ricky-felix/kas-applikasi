@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
-import { PENDING_REGISTRATIONS, type PendingRegistration } from "@/lib/data";
+import { type PendingRegistration } from "@/lib/data";
+import { usePendingRegistrations } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 
 export function PendaftaranSheet({ toast }: { toast?: (m: string) => void }) {
+  const PENDING_REGISTRATIONS = usePendingRegistrations();
   const [regs, setRegs] = useState<PendingRegistration[]>(
     PENDING_REGISTRATIONS.filter((r) => r.status === "Pending")
   );

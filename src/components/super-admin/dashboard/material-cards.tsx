@@ -1,7 +1,9 @@
-import { MATERIALS } from "@/lib/data";
+"use client";
+import { useMaterials } from "@/lib/stores";
 import { SectionHead, Bar } from "../shared";
 
 export function MaterialCards() {
+  const MATERIALS = useMaterials();
   return (
     <section className="mt-14">
       <SectionHead no="07" kicker="MATERIAL · GUDANG">Serapan vs anggaran, <em>per item.</em></SectionHead>

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, MATERIALS } from "@/lib/data";
+import type { Project } from "@/lib/data";
+import { useMaterials } from "@/lib/stores";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 type InventoryItem = { materialId: string; name: string; unit: string; qty: number };
@@ -24,10 +25,11 @@ export default function MaterialTab({
   isKepalaProyek,
   toast,
 }: {
-  myProjects: typeof PROJECTS;
+  myProjects: Project[];
   isKepalaProyek: boolean;
   toast: (m: string) => void;
 }) {
+  const MATERIALS = useMaterials();
   const [projId, setProjId]           = useState(myProjects[0]?.id || "");
   const [inventory, setInventory]     = useState<ProjectInventory>(INITIAL_INVENTORY);
   const [pakaiId, setPakaiId]         = useState<string | null>(null);

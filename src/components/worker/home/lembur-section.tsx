@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { PROJECTS } from "@/lib/data";
+import type { Project } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
 import { Kicker, MonoLabel } from "@/components/primitives";
 
 export type LemburSession = {
@@ -55,6 +56,7 @@ const LEMBUR_HOURS = [1, 2, 3, 4, 5];
 type Phase = "pick-reason" | "pick-project" | "pending" | "approved" | "pick-hours";
 
 function ActiveLembur({ session, onStop }: { session: LemburSession; onStop: () => void }) {
+  const PROJECTS = useProjects();
   const msLeft   = useCountdown(session.endsAt);
   const overtime = msLeft === 0;
   const cd       = fmtCountdown(msLeft);
@@ -121,13 +123,14 @@ export function LemburSection({
   onStop,
   toast,
 }: {
-  projects: typeof PROJECTS;
+  projects: Project[];
   lemburSessions: LemburSession[];
   lemburActive: LemburSession | undefined;
   onStart: (projectId: string, note: string, hours: number) => void;
   onStop: () => void;
   toast: (m: string) => void;
 }) {
+  const PROJECTS = useProjects();
   const [phase, setPhase]                   = useState<Phase>("pick-reason");
   const [selectedReason, setSelectedReason] = useState("");
   const [selectedProjId, setSelectedProjId] = useState(projects[0]?.id || "");

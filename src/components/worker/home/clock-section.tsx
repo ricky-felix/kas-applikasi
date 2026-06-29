@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { PROJECTS } from "@/lib/data";
+import type { Project } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
 import { Kicker, MonoLabel } from "@/components/primitives";
 import { ConfirmDialog } from "./confirm-dialog";
 
@@ -567,7 +568,7 @@ export function ClockSection({
   onClockOut,
   onClockInLembur,
 }: {
-  selectedProj: typeof PROJECTS[0] | undefined;
+  selectedProj: Project | undefined;
   activeSession: Session | undefined;
   isAbsent: boolean;
   absentReason?: string;
@@ -576,6 +577,7 @@ export function ClockSection({
   onClockOut: () => void;
   onClockInLembur: (type: LemburType) => void;
 }) {
+  const PROJECTS = useProjects();
   const [step, setStep] = useState<Step>("idle");
   // The clock decides whether this clock-in is normal absensi or lembur.
   const attendanceKind = classifyAttendance();

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS } from "@/lib/data";
+import type { Project } from "@/lib/data";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 type Session = { id: number; projectId: string; in: string; out: string | null };
@@ -10,7 +10,7 @@ export default function PhotoTab({
   setState,
   toast,
 }: {
-  proj: typeof PROJECTS[0];
+  proj: Project;
   state: { photos: number };
   setState: (fn: (s: { sessions: Session[]; absentProjects: { id: string; reason: string }[]; selectedProjectId: string; photos: number; overtime: number }) => { sessions: Session[]; absentProjects: { id: string; reason: string }[]; selectedProjectId: string; photos: number; overtime: number }) => void;
   toast: (m: string) => void;

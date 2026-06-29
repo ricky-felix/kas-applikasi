@@ -1,11 +1,22 @@
 "use client";
-import { useState } from "react";
-import { MATERIAL_REQUESTS, PROJECTS } from "@/lib/data";
+import { useEffect, useRef, useState } from "react";
+import { useProjects } from "@/lib/projects-store";
+import { useMaterialRequests } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 
 export function MaterialRequestsTab({ toast }: { toast: (m: string) => void }) {
+  const PROJECTS = useProjects();
+  const MATERIAL_REQUESTS = useMaterialRequests();
   const [reqs, setReqs]               = useState(MATERIAL_REQUESTS);
+  // Seed local editable list from live material requests once they hydrate.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seeded.current && MATERIAL_REQUESTS.length > 0) {
+      setReqs(MATERIAL_REQUESTS);
+      seeded.current = true;
+    }
+  }, [MATERIAL_REQUESTS]);
   const [confirmId, setConfirmId]     = useState<string | null>(null);
   const [rejectConfirmId, setRejectConfirmId] = useState<string | null>(null);
 

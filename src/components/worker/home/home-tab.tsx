@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, WORKERS, TODAY_SHORT } from "@/lib/data";
+import { TODAY_SHORT, type Project } from "@/lib/data";
+import { useWorkers } from "@/lib/stores";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 import { ProjectSelector } from "./project-selector";
 import { ClockSection } from "./clock-section";
@@ -21,7 +22,7 @@ function nowTime() {
 export default function HomeTab({
   myProjects, me, isKepalaProyek, state, setState, clockIn, clockOut, markProjectAbsent, activeSession, toast,
 }: {
-  myProjects: typeof PROJECTS;
+  myProjects: Project[];
   me: { name: string; short: string; role: string; phone: string; rate: number; id: string };
   isKepalaProyek: boolean;
   state: { sessions: Session[]; absentProjects: AbsentProject[]; selectedProjectId: string; overtime: number };
@@ -51,11 +52,12 @@ export default function HomeTab({
 function PekerjaReadOnlyHome({
   myProjects, me, state, setState,
 }: {
-  myProjects: typeof PROJECTS;
+  myProjects: Project[];
   me: { name: string };
   state: { selectedProjectId: string };
   setState: (fn: (s: { sessions: Session[]; absentProjects: AbsentProject[]; selectedProjectId: string; photos: number; overtime: number }) => { sessions: Session[]; absentProjects: AbsentProject[]; selectedProjectId: string; photos: number; overtime: number }) => void;
 }) {
+  const WORKERS = useWorkers();
   const selectedProj = myProjects.find((p) => p.id === state.selectedProjectId) || myProjects[0];
   const kepala = selectedProj
     ? WORKERS.find((w) => selectedProj.assigned.includes(w.id) && w.isKepalaProyek)
@@ -133,7 +135,7 @@ function PekerjaReadOnlyHome({
 function KepalaHome({
   myProjects, me, state, setState, clockIn, clockOut, markProjectAbsent, activeSession, toast,
 }: {
-  myProjects: typeof PROJECTS;
+  myProjects: Project[];
   me: { name: string; short: string; role: string; phone: string; rate: number; id: string };
   state: { sessions: Session[]; absentProjects: AbsentProject[]; selectedProjectId: string; overtime: number };
   setState: (fn: (s: { sessions: Session[]; absentProjects: AbsentProject[]; selectedProjectId: string; photos: number; overtime: number }) => { sessions: Session[]; absentProjects: AbsentProject[]; selectedProjectId: string; photos: number; overtime: number }) => void;

@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, MATERIALS } from "@/lib/data";
+import type { Project } from "@/lib/data";
+import { useMaterials } from "@/lib/stores";
 import { Kicker } from "@/components/primitives";
 
-export function MaterialRequest({ projects, toast }: { projects: typeof PROJECTS; toast: (m: string) => void }) {
+export function MaterialRequest({ projects, toast }: { projects: Project[]; toast: (m: string) => void }) {
+  const MATERIALS = useMaterials();
   const [open, setOpen] = useState(false);
   const [projId, setProjId] = useState(projects[0]?.id || "");
   const [matId, setMatId] = useState("");

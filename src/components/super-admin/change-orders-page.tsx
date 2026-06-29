@@ -1,12 +1,16 @@
 "use client";
 import { useState } from "react";
-import { CHANGE_ORDERS, PROJECTS, fmtIDRshort } from "@/lib/data";
+import { fmtIDRshort } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useChangeOrders } from "@/lib/stores";
 import { TopBar, SectionHead, Footer } from "./shared";
 
 type CoStatus = "Menunggu" | "Disetujui" | "Ditolak";
 type Confirm = { id: string; action: "Disetujui" | "Ditolak"; label: string } | null;
 
 export default function ChangeOrdersPage() {
+	const CHANGE_ORDERS = useChangeOrders();
+	const PROJECTS = useProjects();
 	const [coStatuses, setCoStatuses] = useState<Record<string, CoStatus>>(() =>
 		Object.fromEntries(CHANGE_ORDERS.map((c) => [c.id, c.status as CoStatus])),
 	);

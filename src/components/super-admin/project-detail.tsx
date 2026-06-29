@@ -29,9 +29,12 @@ export default function ProjectDetail({
 	id: string;
 	back: () => void;
 }) {
-	const projects = useProjects();
-	const p = projects.find((x) => x.id === id) || projects[0];
+	const PROJECTS = useProjects();
+	const p = PROJECTS.find((x) => x.id === id) || PROJECTS[0];
 	const [tab, setTab] = useState("overview");
+
+	// Projects hydrate asynchronously from the backend; nothing to show until then.
+	if (!p) return null;
 	const sisa = p.contractValue - p.paid;
 
 	return (

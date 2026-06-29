@@ -1,7 +1,11 @@
-import { WORK_REPORTS, PROJECTS } from "@/lib/data";
+"use client";
+import { useWorkReports } from "@/lib/stores";
+import { useProjects } from "@/lib/projects-store";
 import { MonoLabel } from "@/components/primitives";
 
 export function LaporanSheet() {
+  const WORK_REPORTS = useWorkReports();
+  const PROJECTS = useProjects();
   // Group today's reports by project
   const today   = WORK_REPORTS.filter((r) => r.date === WORK_REPORTS[0]?.date); // same day as most recent
   const allReports = WORK_REPORTS; // show all for demo

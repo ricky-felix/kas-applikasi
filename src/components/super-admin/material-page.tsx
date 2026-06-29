@@ -1,15 +1,17 @@
 "use client";
-import { useState } from "react";
-import { MATERIALS, type Material, fmtIDR } from "@/lib/data";
+import { useState, useMemo } from "react";
+import { type Material, fmtIDR } from "@/lib/data";
+import { useMaterials } from "@/lib/stores";
 import { MonoLabel, ProgressBar } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
 const UNITS = ["kg", "ltr", "pcs", "m²", "m", "set", "roll", "sak"];
-const SUPPLIERS = Array.from(new Set(MATERIALS.map((m) => m.supplier)));
 
 type ModalState = "none" | "add" | "restock";
 
 export default function MaterialPage() {
+  const MATERIALS = useMaterials();
+  const SUPPLIERS = useMemo(() => Array.from(new Set(MATERIALS.map((m) => m.supplier))), [MATERIALS]);
   const [view, setView] = useState<"stock" | "usage">("stock");
   const [materials, setMaterials] = useState<Material[]>(MATERIALS);
   const [modal, setModal] = useState<ModalState>("none");

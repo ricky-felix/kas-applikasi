@@ -1,11 +1,22 @@
 "use client";
-import { useState } from "react";
-import { CHANGE_ORDERS, PROJECTS } from "@/lib/data";
+import { useEffect, useRef, useState } from "react";
+import { useProjects } from "@/lib/projects-store";
+import { useChangeOrders } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 
 export function ChangeOrderTab({ toast }: { toast: (m: string) => void }) {
+	const PROJECTS = useProjects();
+	const CHANGE_ORDERS = useChangeOrders();
 	const [cos, setCos]                         = useState(CHANGE_ORDERS);
+	// Seed local editable list from live change orders once they hydrate.
+	const seeded = useRef(false);
+	useEffect(() => {
+		if (!seeded.current && CHANGE_ORDERS.length > 0) {
+			setCos(CHANGE_ORDERS);
+			seeded.current = true;
+		}
+	}, [CHANGE_ORDERS]);
 	const [confirmId, setConfirmId]             = useState<string | null>(null);
 	const [rejectConfirmId, setRejectConfirmId] = useState<string | null>(null);
 

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS } from "@/lib/data";
+import type { Project } from "@/lib/data";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 type Session = { id: number; projectId: string; in: string; out: string | null };
@@ -18,7 +18,7 @@ export default function LaporanTab({
   setState,
   toast,
 }: {
-  myProjects: typeof PROJECTS;
+  myProjects: Project[];
   state: State;
   setState: (fn: (s: State) => State) => void;
   toast: (m: string) => void;

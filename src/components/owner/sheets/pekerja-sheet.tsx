@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, WORKERS, type Worker, type Project } from "@/lib/data";
+import { type Worker, type Project } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
 
 export function PekerjaSheet({ workers, activeProjects }: { workers: Worker[]; activeProjects: Project[] }) {
+  const PROJECTS = useProjects();
   // assignments: workerId → set of projectIds
   const [assignments, setAssignments] = useState<Record<string, Set<string>>>(() =>
     Object.fromEntries(

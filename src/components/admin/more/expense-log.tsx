@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
-import { EXPENSES, fmtIDR } from "@/lib/data";
+import { fmtIDR } from "@/lib/data";
+import { useExpenses } from "@/lib/stores";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 export default function AMExpenseLog({ onBack, toast }: { onBack?: () => void; toast: (m: string) => void }) {
+  const EXPENSES = useExpenses();
   const [showForm, setShowForm] = useState(false);
   const total = EXPENSES.reduce((s, e) => s + e.amount, 0);
   const catColor: Record<string, string> = { Material: "var(--kas-cobalt-soft)", Transport: "var(--kas-ochre-soft)", Upah: "var(--kas-moss-soft)", "Lain-lain": "var(--kas-paper-2)" };

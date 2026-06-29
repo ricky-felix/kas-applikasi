@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS } from "@/lib/data";
+import type { Project } from "@/lib/data";
 import { Kicker } from "@/components/primitives";
 
-export function DailyReport({ projects, toast }: { projects: typeof PROJECTS; toast: (m: string) => void }) {
+export function DailyReport({ projects, toast }: { projects: Project[]; toast: (m: string) => void }) {
   const [note, setNote] = useState("");
   const [sent, setSent] = useState(false);
   const [projId, setProjId] = useState(projects[0]?.id || "");

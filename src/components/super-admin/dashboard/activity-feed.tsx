@@ -1,8 +1,10 @@
-import { PROJECTS } from "@/lib/data";
+"use client";
+import { useProjects } from "@/lib/projects-store";
 import { SectionHead } from "../shared";
 
 export function ActivityFeed() {
-  const activities = [...PROJECTS[0].activity, ...PROJECTS[1].activity].slice(0, 6);
+  const PROJECTS = useProjects();
+  const activities = [...(PROJECTS[0]?.activity ?? []), ...(PROJECTS[1]?.activity ?? [])].slice(0, 6);
 
   return (
     <section>

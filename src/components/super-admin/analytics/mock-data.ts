@@ -1,23 +1,34 @@
 import {
-	PROJECTS,
-	PAYROLL_MAY,
-	MATERIALS,
-	WORKERS,
-	WORK_REPORTS,
-	MATERIAL_REQUESTS,
-	CHANGE_ORDERS,
 	WEBSITE_MONTHLY,
 	WEBSITE_PAGES,
 	WEBSITE_FUNNEL,
 	payrollTotal,
 	fmtIDRshort,
+	type Project,
+	type Material,
+	type Worker,
+	type WorkReport,
+	type MaterialRequest,
+	type ChangeOrder,
+	type PayrollEntry,
 } from "@/lib/data";
 import type { AnalyticsData } from "./types";
 
 const WORKING_DAYS = 24;
 
-export function getMockData(): AnalyticsData {
-	const employees = PAYROLL_MAY.map((pw) => {
+// Employees/features/pending/low-stock are derived from real backend data.
+// `website` and `posthog` remain static placeholders — there is no backend or
+// analytics-query source wired for marketing-site / product-analytics figures.
+export function buildAnalyticsData(
+	PROJECTS: Project[],
+	MATERIALS: Material[],
+	WORKERS: Worker[],
+	WORK_REPORTS: WorkReport[],
+	MATERIAL_REQUESTS: MaterialRequest[],
+	CHANGE_ORDERS: ChangeOrder[],
+	PAYROLL: PayrollEntry[],
+): AnalyticsData {
+	const employees = PAYROLL.map((pw) => {
 		const totalDays = pw.projects.reduce(
 			(s, p) => s + p.daysPresent + p.daysHalf * 0.5,
 			0,
@@ -34,7 +45,7 @@ export function getMockData(): AnalyticsData {
 		const revCredit = pw.projects.reduce((s, proj) => {
 			const project = PROJECTS.find((p) => p.id === proj.projectId);
 			if (!project) return s;
-			const projAllDays = PAYROLL_MAY.reduce((sum, w2) => {
+			const projAllDays = PAYROLL.reduce((sum, w2) => {
 				const p2 = w2.projects.find((x) => x.projectId === proj.projectId);
 				return p2 ? sum + p2.daysPresent + p2.daysHalf * 0.5 : sum;
 			}, 0);

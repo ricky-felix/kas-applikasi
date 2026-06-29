@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, fmtIDR, fmtIDRshort } from "@/lib/data";
+import { fmtIDR, fmtIDRshort } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 
 function WAIcon() {
@@ -8,6 +9,7 @@ function WAIcon() {
 }
 
 export default function AMBilling({ toast }: { toast: (m: string) => void }) {
+  const PROJECTS = useProjects();
   const outstanding = PROJECTS.filter((p) => p.contractValue > p.paid);
   const total = outstanding.reduce((s, p) => s + (p.contractValue - p.paid), 0);
   const [lunasList, setLunasList] = useState<Set<string>>(new Set());

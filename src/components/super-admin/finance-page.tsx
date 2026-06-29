@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo, useRef, useEffect } from "react";
-import { CASHFLOW_MAY, EXPENSES, PAYROLL_MAY, CASH_ADVANCES, DAILY_ALLOWANCES, WORKERS, fmtIDR, fmtIDRshort, payrollTotal } from "@/lib/data";
+import { fmtIDR, fmtIDRshort, payrollTotal } from "@/lib/data";
+import { useCashFlow, useExpenses, useCashAdvances, useDailyAllowances, useWorkers, usePayroll } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
 
@@ -40,6 +41,12 @@ function getCutoff(range: PresetRange): Date {
 }
 
 export default function FinancePage() {
+  const CASHFLOW_MAY = useCashFlow();
+  const EXPENSES = useExpenses();
+  const CASH_ADVANCES = useCashAdvances();
+  const DAILY_ALLOWANCES = useDailyAllowances();
+  const WORKERS = useWorkers();
+  const PAYROLL_MAY = usePayroll();
   const [range, setRange] = useState<Range>("30d");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -72,11 +79,11 @@ export default function FinancePage() {
 
   const filteredCashflow = useMemo(
     () => CASHFLOW_MAY.filter((e) => { const d = parseDate(e.date); return d >= from && d <= to; }),
-    [from, to],
+    [from, to, CASHFLOW_MAY],
   );
   const filteredExpenses = useMemo(
     () => EXPENSES.filter((e) => { const d = parseDate(e.date); return d >= from && d <= to; }),
-    [from, to],
+    [from, to, EXPENSES],
   );
 
   const totalIn         = filteredCashflow.filter((e) => e.type === "in").reduce((s, e) => s + e.amount, 0);

@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
-import { PROJECTS, WORKERS, TODAY_SHORT } from "@/lib/data";
+import { TODAY_SHORT } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkers } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 
 const IZIN_REASONS = ["Sakit", "Acara Keluarga", "Urusan Pribadi", "Cuti", "Yang Lain"];
@@ -8,6 +10,8 @@ const IZIN_REASONS = ["Sakit", "Acara Keluarga", "Urusan Pribadi", "Cuti", "Yang
 type Mark = { status: string; reason?: string };
 
 export default function AMAttend({ toast }: { toast: (m: string) => void }) {
+  const PROJECTS = useProjects();
+  const WORKERS = useWorkers();
   const active = PROJECTS.filter((p) => p.status === "Active");
   const [proj, setProj] = useState(active[0]?.id);
   const [marks, setMarks] = useState<Record<string, Mark>>({});

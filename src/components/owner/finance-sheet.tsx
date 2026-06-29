@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { CASHFLOW_MAY, PAYROLL_MAY, fmtIDRshort, payrollTotal } from "@/lib/data";
+import { fmtIDRshort, payrollTotal } from "@/lib/data";
+import { useCashFlow, usePayroll } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 
 const BULAN: Record<string, number> = {
@@ -18,6 +19,8 @@ const TODAY = new Date(2026, 4, 24);
 type Period = "week" | "month";
 
 export default function OwnerFinanceSheet() {
+  const CASHFLOW_MAY = useCashFlow();
+  const PAYROLL_MAY = usePayroll();
   const [period, setPeriod] = useState<Period>("month");
 
   const cutoff = new Date(TODAY.getTime() - (period === "week" ? 6 : 29) * 86400000);

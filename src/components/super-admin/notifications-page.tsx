@@ -1,8 +1,9 @@
 "use client";
 import {
-  MATERIALS, MATERIAL_REQUESTS, CHANGE_ORDERS,
-  WEBSITE_MONTHLY, WEBSITE_FUNNEL, PAYROLL_MAY, fmtIDRshort,
+  WEBSITE_MONTHLY, WEBSITE_FUNNEL, fmtIDRshort,
+  type Material, type MaterialRequest, type ChangeOrder, type PayrollEntry,
 } from "@/lib/data";
+import { useMaterials, useMaterialRequests, useChangeOrders, usePayroll } from "@/lib/stores";
 import { TopBar, Footer } from "./shared";
 import { MonoLabel } from "@/components/primitives";
 
@@ -15,7 +16,12 @@ type Notif = {
   nav?: string;
 };
 
-function buildNotifications(): Notif[] {
+function buildNotifications(
+  MATERIALS: Material[],
+  MATERIAL_REQUESTS: MaterialRequest[],
+  CHANGE_ORDERS: ChangeOrder[],
+  PAYROLL: PayrollEntry[],
+): Notif[] {
   const items: Notif[] = [];
 
   // Low stock
@@ -74,7 +80,7 @@ function buildNotifications(): Notif[] {
   }
 
   // Low-utilisation workers
-  const lowUtil = PAYROLL_MAY.filter((pw) => {
+  const lowUtil = PAYROLL.filter((pw) => {
     const days = pw.projects.reduce((s, p) => s + p.daysPresent + p.daysHalf * 0.5, 0);
     return (days / WORKING_DAYS) * 100 < 55;
   });
@@ -101,7 +107,11 @@ const KIND_ORDER: Notif["kind"][] = ["danger", "warning", "info"];
 const KIND_LABEL: Record<Notif["kind"], string> = { danger: "Mendesak", warning: "Perhatian", info: "Informasi" };
 
 export default function NotificationsPage() {
-  const all = buildNotifications();
+  const MATERIALS = useMaterials();
+  const MATERIAL_REQUESTS = useMaterialRequests();
+  const CHANGE_ORDERS = useChangeOrders();
+  const PAYROLL = usePayroll();
+  const all = buildNotifications(MATERIALS, MATERIAL_REQUESTS, CHANGE_ORDERS, PAYROLL);
   const groups = KIND_ORDER.map((k) => ({ kind: k, items: all.filter((n) => n.kind === k) })).filter((g) => g.items.length > 0);
   const total = all.length;
 

@@ -8,10 +8,10 @@ export function OverviewTab({ p }: { p: Project }) {
       <div>
         <SectionHead no="01" kicker="CATATAN INTERNAL">Ringkasan, <em>secukupnya.</em></SectionHead>
         <p style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 19, lineHeight: 1.5, margin: 0, color: "var(--kas-ink-2)" }}>
-          {p.summary || "Belum ada catatan internal untuk proyek ini."}
+          Lapisan utama sudah diaplikasikan, sedang menunggu cure 24 jam sebelum primer ke-dua. Akses ke lantai 3 disepakati lewat tangga belakang. Klien minta progres foto tiap Jumat sore.
         </p>
         <div className="grid mt-6" style={{ gridTemplateColumns: "1fr 1fr 1fr", borderTop: "1px solid var(--kas-line)", borderBottom: "1px solid var(--kas-line)" }}>
-          {[{ l: "Pekerja Aktif", v: String(p.assigned.length).padStart(2, "0") }, { l: "Hari Berjalan", v: String(p.daysRunning ?? 0).padStart(2, "0") }, { l: "Foto Progres", v: String(p.photos ?? 0).padStart(2, "0") }].map((s, i) => (
+          {[{ l: "Pekerja Aktif", v: String(p.assigned.length).padStart(2, "0") }, { l: "Hari Berjalan", v: "12" }, { l: "Foto Progres", v: "47" }].map((s, i) => (
             <div key={i} className="py-4 pr-4" style={{ borderRight: i < 2 ? "1px solid var(--kas-line)" : "none" }}>
               <MonoLabel size={10}>{s.l}</MonoLabel>
               <div style={{ fontFamily: "var(--font-newsreader), serif", fontSize: 28, marginTop: 4 }}>{s.v}</div>

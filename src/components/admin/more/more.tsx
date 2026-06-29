@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
-import { WORKERS, PROJECTS, PENDING_REGISTRATIONS } from "@/lib/data";
+import { useMemo, useState } from "react";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkers, usePendingRegistrations } from "@/lib/stores";
 import { WORKER_JABATAN } from "@/components/login/types";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 import { EditProfileOverlay } from "@/components/profile/edit-profile";
@@ -9,11 +10,6 @@ import AMApprovals from "./approvals";
 import AMContacts from "./contacts";
 import { RiwayatTab } from "@/components/admin/financial/riwayat-tab";
 import { MaterialTab } from "@/components/admin/financial/material-tab";
-
-const activeClientsCount  = PROJECTS.filter((p) => p.status === "Active").length;
-const workerPendingCount  = PENDING_REGISTRATIONS.filter(
-  (r) => r.status === "Pending" && WORKER_JABATAN.includes(r.jabatan)
-).length;
 
 type SubView = "workers" | "approvals" | "contacts" | "riwayat" | "material";
 
@@ -38,6 +34,14 @@ function MenuItem({ n, label, sub, onClick }: { n: string; label: string; sub: s
 }
 
 export default function AMMore({ session, toast, onLogout }: { session: { name: string; short: string; phone?: string }; toast: (m: string) => void; onLogout: () => void }) {
+  const WORKERS = useWorkers();
+  const PROJECTS = useProjects();
+  const PENDING_REGISTRATIONS = usePendingRegistrations();
+  const activeClientsCount = useMemo(() => PROJECTS.filter((p) => p.status === "Active").length, [PROJECTS]);
+  const workerPendingCount = useMemo(
+    () => PENDING_REGISTRATIONS.filter((r) => r.status === "Pending" && WORKER_JABATAN.includes(r.jabatan)).length,
+    [PENDING_REGISTRATIONS],
+  );
   const [subView, setSubView] = useState<SubView | null>(null);
   const [showEdit, setShowEdit] = useState(false);
   const [profile, setProfile] = useState({ name: session.name, phone: session.phone ?? "" });

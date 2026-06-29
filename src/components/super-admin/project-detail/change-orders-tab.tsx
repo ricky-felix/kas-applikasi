@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
-import { CHANGE_ORDERS, fmtIDR } from "@/lib/data";
+import { fmtIDR } from "@/lib/data";
+import { useChangeOrders } from "@/lib/stores";
 import { MonoLabel } from "@/components/primitives";
 import { SectionHead } from "../shared";
 
 export function ChangeOrdersTab({ projectId }: { projectId: string }) {
+	const CHANGE_ORDERS = useChangeOrders();
 	const orders = CHANGE_ORDERS.filter((c) => c.projectId === projectId);
 	const [coStatuses, setCoStatuses] = useState<Record<string, string>>(() =>
 		Object.fromEntries(CHANGE_ORDERS.map((c) => [c.id, c.status])),

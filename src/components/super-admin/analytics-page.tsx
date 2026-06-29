@@ -1,13 +1,38 @@
+"use client";
 import { Footer } from "./shared";
-import { getMockData } from "./analytics/mock-data";
+import { buildAnalyticsData } from "./analytics/mock-data";
 import { WebsiteSection } from "./analytics/website-section";
 import { FunnelSection } from "./analytics/funnel-section";
 import { AppUsageSection } from "./analytics/app-usage-section";
 import { EmployeeSection } from "./analytics/employee-section";
 import { FeatureSection } from "./analytics/feature-section";
+import { useProjects } from "@/lib/projects-store";
+import {
+	useMaterials,
+	useWorkers,
+	useWorkReports,
+	useMaterialRequests,
+	useChangeOrders,
+	usePayroll,
+} from "@/lib/stores";
 
 export default function AnalyticsPage() {
-	const d = getMockData();
+	const projects = useProjects();
+	const materials = useMaterials();
+	const workers = useWorkers();
+	const workReports = useWorkReports();
+	const materialRequests = useMaterialRequests();
+	const changeOrders = useChangeOrders();
+	const payroll = usePayroll();
+	const d = buildAnalyticsData(
+		projects,
+		materials,
+		workers,
+		workReports,
+		materialRequests,
+		changeOrders,
+		payroll,
+	);
 
 	return (
 		<div

@@ -1,6 +1,8 @@
 "use client";
 import { useState, useRef, useMemo } from "react";
-import { ACCOUNTS, WORKERS, PROJECTS } from "@/lib/data";
+import { ACCOUNTS } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import { useWorkers } from "@/lib/stores";
 import { TopBar, SectionHead, Footer } from "./shared";
 
 type ContactType = "semua" | "staf" | "pekerja" | "klien";
@@ -33,6 +35,8 @@ const TYPE_BG:    Record<Contact["type"], string> = { staf: "var(--kas-cobalt-so
 const TYPE_FG:    Record<Contact["type"], string> = { staf: "var(--kas-cobalt-ink)", pekerja: "var(--kas-ink-3)", klien: "var(--kas-ochre-ink)" };
 
 export default function ContactsPage() {
+  const PROJECTS = useProjects();
+  const WORKERS = useWorkers();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ContactType>("semua");
   const letterRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -45,7 +49,7 @@ export default function ContactsPage() {
       seen.add(digits);
       return [{ name: p.client.name, phone: p.client.phone, projectName: p.name }];
     });
-  }, []);
+  }, [PROJECTS]);
 
   const allContacts: Contact[] = useMemo(() => [
     ...ACCOUNTS.filter((a) => a.role !== "worker").map((a) => ({
@@ -60,7 +64,7 @@ export default function ContactsPage() {
       key: c.phone, name: c.name, phone: c.phone, type: "klien" as const,
       sublabel: c.projectName,
     })),
-  ].sort((a, b) => a.name.localeCompare(b.name, "id")), [uniqueClients]);
+  ].sort((a, b) => a.name.localeCompare(b.name, "id")), [uniqueClients, WORKERS]);
 
   const q = search.toLowerCase();
   const visible = allContacts.filter((c) =>

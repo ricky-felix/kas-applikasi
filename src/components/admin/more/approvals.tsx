@@ -1,14 +1,24 @@
 "use client";
-import { useState } from "react";
-import { PENDING_REGISTRATIONS, type PendingRegistration } from "@/lib/data";
+import { useEffect, useRef, useState } from "react";
+import { type PendingRegistration } from "@/lib/data";
+import { usePendingRegistrations } from "@/lib/stores";
 import { WORKER_JABATAN } from "@/components/login/types";
 import { Kicker, DisplayHeading, MonoLabel } from "@/components/primitives";
 import { BossConfirmDialog } from "@/components/admin/boss-confirm";
 
 export default function AMApprovals({ onBack, toast }: { onBack: () => void; toast: (m: string) => void }) {
+  const PENDING_REGISTRATIONS = usePendingRegistrations();
   const [regs, setRegs] = useState<PendingRegistration[]>(
     PENDING_REGISTRATIONS.filter((r) => r.status === "Pending" && WORKER_JABATAN.includes(r.jabatan))
   );
+  // Seed local editable list from live registrations once they hydrate.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seeded.current && PENDING_REGISTRATIONS.length > 0) {
+      setRegs(PENDING_REGISTRATIONS.filter((r) => r.status === "Pending" && WORKER_JABATAN.includes(r.jabatan)));
+      seeded.current = true;
+    }
+  }, [PENDING_REGISTRATIONS]);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [rejectConfirmId, setRejectConfirmId] = useState<string | null>(null);
 

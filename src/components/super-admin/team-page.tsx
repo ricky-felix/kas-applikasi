@@ -1,16 +1,18 @@
 "use client";
 import {
-	WORKERS,
-	PROJECTS,
-	PAYROLL_MAY,
-	WORK_REPORTS,
-	MATERIAL_REQUESTS,
-	CASH_ADVANCES,
-	DAILY_ALLOWANCES,
 	fmtIDR,
 	fmtIDRshort,
 	payrollTotal,
 } from "@/lib/data";
+import { useProjects } from "@/lib/projects-store";
+import {
+	useWorkers,
+	useWorkReports,
+	useMaterialRequests,
+	useCashAdvances,
+	useDailyAllowances,
+	usePayroll,
+} from "@/lib/stores";
 import { useState } from "react";
 import { MonoLabel } from "@/components/primitives";
 import { TopBar, SectionHead, Footer } from "./shared";
@@ -41,6 +43,13 @@ function MiniBar({ pct, color }: { pct: number; color: string }) {
 }
 
 export default function TeamPage() {
+	const WORKERS = useWorkers();
+	const PROJECTS = useProjects();
+	const PAYROLL_MAY = usePayroll();
+	const WORK_REPORTS = useWorkReports();
+	const MATERIAL_REQUESTS = useMaterialRequests();
+	const CASH_ADVANCES = useCashAdvances();
+	const DAILY_ALLOWANCES = useDailyAllowances();
 	const workerData = WORKERS.map((w) => {
 		const assignedProjects = PROJECTS.filter((p) => p.assigned.includes(w.id));
 		const payroll = PAYROLL_MAY.find((pw) => pw.workerId === w.id);

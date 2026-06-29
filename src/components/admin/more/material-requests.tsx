@@ -1,10 +1,21 @@
 "use client";
-import { useState } from "react";
-import { MATERIAL_REQUESTS, PROJECTS } from "@/lib/data";
+import { useEffect, useRef, useState } from "react";
+import { useProjects } from "@/lib/projects-store";
+import { useMaterialRequests } from "@/lib/stores";
 import { Kicker, DisplayHeading } from "@/components/primitives";
 
 export default function AMMaterialRequests({ onBack, toast }: { onBack: () => void; toast: (m: string) => void }) {
+  const MATERIAL_REQUESTS = useMaterialRequests();
+  const PROJECTS = useProjects();
   const [requests, setRequests] = useState(MATERIAL_REQUESTS);
+  // Seed local editable list from live material requests once they hydrate.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seeded.current && MATERIAL_REQUESTS.length > 0) {
+      setRequests(MATERIAL_REQUESTS);
+      seeded.current = true;
+    }
+  }, [MATERIAL_REQUESTS]);
   const approve = (id: string) => { setRequests((r) => r.map((x) => x.id === id ? { ...x, status: "Disetujui" as const } : x)); toast("Permintaan disetujui."); };
   const reject  = (id: string) => { setRequests((r) => r.map((x) => x.id === id ? { ...x, status: "Ditolak" as const } : x)); toast("Permintaan ditolak."); };
   const pending = requests.filter((r) => r.status === "Pending");
